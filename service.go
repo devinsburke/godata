@@ -183,7 +183,10 @@ func (service *GoDataService) GoDataHTTPHandler(w http.ResponseWriter, r *http.R
 		panic(err) // TODO: return proper error
 	}
 
-	w.Write(response)
+	_, err = w.Write(response)
+	if err != nil {
+		panic(err) // TODO: return proper error
+	}
 }
 
 func (service *GoDataService) buildMetadataResponse(request *GoDataRequest) ([]byte, error) {
@@ -318,7 +321,9 @@ func (service *GoDataService) buildRefResponse(request *GoDataRequest) ([]byte, 
 // Start the service listening on the given address.
 func (service *GoDataService) ListenAndServe(addr string) {
 	http.HandleFunc("/", service.GoDataHTTPHandler)
-	http.ListenAndServe(addr, nil)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		panic(err) // TODO: return proper error
+	}
 }
 
 // Lookup an entity type from the service metadata. Accepts a fully qualified

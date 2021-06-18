@@ -89,7 +89,9 @@ func BenchmarkPEMDAS(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		parser.InfixToPostfix(tokens)
+		if _, err := parser.InfixToPostfix(tokens); err != nil {
+			b.Fatalf("Failed to transform tokens from infix to postfix: %v", err)
+		}
 	}
 }
 
@@ -300,6 +302,8 @@ func BenchmarkBuildTree(b *testing.B) {
 	// 2 3 max 3 / 3.1415 * sin
 	for i := 0; i < b.N; i++ {
 		result, _ := parser.InfixToPostfix(tokens)
-		parser.PostfixToTree(result)
+		if _, err := parser.PostfixToTree(result); err != nil {
+			b.Fatalf("Failed to transform tokens: %v", err)
+		}
 	}
 }

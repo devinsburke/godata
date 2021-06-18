@@ -60,8 +60,12 @@ func SemanticizeRequest(req *GoDataRequest, service *GoDataService) error {
 		// TODO: disallow invalid query params
 	case *GoDataEntityType:
 		entityType := req.LastSegment.SemanticReference.(*GoDataEntityType)
-		SemanticizeExpandQuery(req.Query.Expand, service, entityType)
-		SemanticizeSelectQuery(req.Query.Select, service, entityType)
+		if err := SemanticizeExpandQuery(req.Query.Expand, service, entityType); err != nil {
+			return err
+		}
+		if err := SemanticizeSelectQuery(req.Query.Select, service, entityType); err != nil {
+			return err
+		}
 	}
 
 	if req.LastSegment.SemanticType == SemanticTypeMetadata {
@@ -107,7 +111,7 @@ func ParseUrlPath(path string) (*GoDataSegment, *GoDataSegment, error) {
 }
 
 func SemanticizePathSegment(segment *GoDataSegment, service *GoDataService) error {
-	var err error = nil
+	var err error
 
 	if segment.RawValue == "$metadata" {
 		if segment.Next != nil || segment.Prev != nil {
