@@ -333,19 +333,19 @@ func semanticizeExpandItem(
 		target.SemanticReference = entityType
 
 		err = SemanticizeFilterQuery(item.Filter, service, entityType)
-		if err == nil {
+		if err != nil {
 			return err
 		}
 		err = SemanticizeExpandQuery(item.Expand, service, entityType)
-		if err == nil {
+		if err != nil {
 			return err
 		}
 		err = SemanticizeSelectQuery(item.Select, service, entityType)
-		if err == nil {
+		if err != nil {
 			return err
 		}
 		err = SemanticizeOrderByQuery(item.OrderBy, service, entityType)
-		if err == nil {
+		if err != nil {
 			return err
 		}
 
