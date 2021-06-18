@@ -1,5 +1,7 @@
 package godata
 
+import "strings"
+
 const (
 	FilterTokenOpenParen int = iota
 	FilterTokenCloseParen
@@ -142,7 +144,9 @@ func FilterTokenizer() *Tokenizer {
 //
 // See http://docs.oasis-open.org/odata/odata/v4.01/csprd03/abnf/odata-abnf-construction-rules.txt
 func unescapeTokenString(in string) string {
-	return in
+	// The call to ReplaceAll() implements
+	// SQUOTE-in-string = SQUOTE SQUOTE ; two consecutive single quotes represent one within a string literal
+	return strings.ReplaceAll(in, "''", "'")
 }
 
 func FilterParser() *Parser {
