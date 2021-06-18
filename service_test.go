@@ -25,39 +25,39 @@ func (*DummyProvider) GetMetadata() *GoDataMetadata {
 	metadata := &GoDataMetadata{
 		DataServices: &GoDataServices{
 			Schemas: []*GoDataSchema{
-				&GoDataSchema{
+				{
 					Namespace: "Store",
 					EntityTypes: []*GoDataEntityType{
-						&GoDataEntityType{
+						{
 							Name: "Customer",
 							Properties: []*GoDataProperty{
-								&GoDataProperty{
+								{
 									Name: "Name",
 									Type: GoDataString,
 								},
-								&GoDataProperty{
+								{
 									Name: "Age",
 									Type: GoDataInt32,
 								},
 							},
 							NavigationProperties: []*GoDataNavigationProperty{
-								&GoDataNavigationProperty{
+								{
 									Name:    "Orders",
 									Type:    "Collection(Store.Order)",
 									Partner: "Customer",
 								},
 							},
 						},
-						&GoDataEntityType{
+						{
 							Name: "Order",
 							Properties: []*GoDataProperty{
-								&GoDataProperty{
+								{
 									Name: "Id",
 									Type: GoDataString,
 								},
 							},
 							NavigationProperties: []*GoDataNavigationProperty{
-								&GoDataNavigationProperty{
+								{
 									Name:    "Customer",
 									Type:    "Store.Customer",
 									Partner: "Orders",
@@ -66,24 +66,24 @@ func (*DummyProvider) GetMetadata() *GoDataMetadata {
 						},
 					},
 					EntityContainers: []*GoDataEntityContainer{
-						&GoDataEntityContainer{
+						{
 							Name: "Collections",
 							EntitySets: []*GoDataEntitySet{
-								&GoDataEntitySet{
+								{
 									Name:       "Customers",
 									EntityType: "Store.Customer",
 									NavigationPropertyBindings: []*GoDataNavigationPropertyBinding{
-										&GoDataNavigationPropertyBinding{
+										{
 											Path:   "Orders",
 											Target: "Orders",
 										},
 									},
 								},
-								&GoDataEntitySet{
+								{
 									Name:       "Orders",
 									EntityType: "Store.Order",
 									NavigationPropertyBindings: []*GoDataNavigationPropertyBinding{
-										&GoDataNavigationPropertyBinding{
+										{
 											Path:   "Customer",
 											Target: "Customer",
 										},

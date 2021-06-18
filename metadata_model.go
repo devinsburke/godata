@@ -164,7 +164,7 @@ type GoDataProperty struct {
 	Type         string   `xml:"Type,attr"`
 	Nullable     string   `xml:"Nullable,attr,omitempty"`
 	MaxLength    int      `xml:"MaxLength,attr,omitempty"`
-	Precision    int      `xml:"Precision, attr,omitempty"`
+	Precision    int      `xml:"Precision,attr,omitempty"`
 	Scale        int      `xml:"Scale,attr,omitempty"`
 	Unicode      string   `xml:"Unicode,attr,omitempty"`
 	SRID         string   `xml:"SRID,attr,omitempty"`

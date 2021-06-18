@@ -9,13 +9,13 @@ func TestSearchQuery(t *testing.T) {
 	input := "mountain OR (\"red bikes\" AND avocados)"
 
 	expect := []*Token{
-		&Token{Value: "mountain", Type: SearchTokenLiteral},
-		&Token{Value: "OR", Type: SearchTokenOp},
-		&Token{Value: "(", Type: SearchTokenOpenParen},
-		&Token{Value: "\"red bikes\"", Type: SearchTokenLiteral},
-		&Token{Value: "AND", Type: SearchTokenOp},
-		&Token{Value: "avocados", Type: SearchTokenLiteral},
-		&Token{Value: ")", Type: SearchTokenCloseParen},
+		{Value: "mountain", Type: SearchTokenLiteral},
+		{Value: "OR", Type: SearchTokenOp},
+		{Value: "(", Type: SearchTokenOpenParen},
+		{Value: "\"red bikes\"", Type: SearchTokenLiteral},
+		{Value: "AND", Type: SearchTokenOp},
+		{Value: "avocados", Type: SearchTokenLiteral},
+		{Value: ")", Type: SearchTokenCloseParen},
 	}
 	output, err := tokenizer.Tokenize(input)
 	if err != nil {
