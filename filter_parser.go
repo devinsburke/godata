@@ -1,5 +1,7 @@
 package godata
 
+import "strings"
+
 const (
 	FilterTokenOpenParen int = iota
 	FilterTokenCloseParen
@@ -16,7 +18,7 @@ const (
 	FilterTokenRoot
 	FilterTokenFloat
 	FilterTokenInteger
-	FilterTokenString // 15
+	FilterTokenString // 15 // SQUOTE *( SQUOTE-in-string / pchar-no-SQUOTE ) SQUOTE
 	FilterTokenDate
 	FilterTokenTime
 	FilterTokenDateTime
@@ -122,12 +124,29 @@ func FilterTokenizer() *Tokenizer {
 	t.Add("^\\$root", FilterTokenRoot)
 	t.Add("^-?[0-9]+\\.[0-9]+", FilterTokenFloat)
 	t.Add("^-?[0-9]+", FilterTokenInteger)
-	t.Add("^'(''|[^'])*'", FilterTokenString)
+	t.AddWithSubstituteFunc("^'(''|[^'])*'", FilterTokenString, unescapeTokenString)
 	t.Add("^(true|false)", FilterTokenBoolean)
 	t.Add("^@*[a-zA-Z][a-zA-Z0-9_.]*", FilterTokenLiteral) // The optional '@' character is used to identify parameter aliases
 	t.Ignore("^ ", FilterTokenWhitespace)
 
 	return &t
+}
+
+// unescapeTokenString unescapes the input string according to the ODATA ABNF rules
+// and returns the unescaped string.
+// In ODATA ABNF, strings are encoded according to the following rules:
+// string           = SQUOTE *( SQUOTE-in-string / pchar-no-SQUOTE ) SQUOTE
+// SQUOTE-in-string = SQUOTE SQUOTE ; two consecutive single quotes represent one within a string literal
+// pchar-no-SQUOTE       = unreserved / pct-encoded-no-SQUOTE / other-delims / "$" / "&" / "=" / ":" / "@"
+// pct-encoded-no-SQUOTE = "%" ( "0" / "1" /   "3" / "4" / "5" / "6" / "8" / "9" / A-to-F ) HEXDIG
+// / "%" "2" ( "0" / "1" / "2" / "3" / "4" / "5" / "6" /   "8" / "9" / A-to-F )
+// unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
+//
+// See http://docs.oasis-open.org/odata/odata/v4.01/csprd03/abnf/odata-abnf-construction-rules.txt
+func unescapeTokenString(in string) string {
+	// The call to ReplaceAll() implements
+	// SQUOTE-in-string = SQUOTE SQUOTE ; two consecutive single quotes represent one within a string literal
+	return strings.ReplaceAll(in, "''", "'")
 }
 
 func FilterParser() *Parser {
