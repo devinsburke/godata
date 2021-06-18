@@ -41,7 +41,7 @@ func SemanticizeSelectQuery(sel *GoDataSelectQuery, service *GoDataService, enti
 
 		if item.Segments[0].Value == "*" {
 			for _, prop := range service.PropertyLookup[entity] {
-				newItems = append(newItems, &SelectItem{[]*Token{&Token{Value: prop.Name}}})
+				newItems = append(newItems, &SelectItem{[]*Token{{Value: prop.Name}}})
 			}
 		} else {
 			newItems = append(newItems, item)

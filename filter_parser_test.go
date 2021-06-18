@@ -29,9 +29,9 @@ func TestFilterDateTime(t *testing.T) {
 		// See http://docs.oasis-open.org/odata/odata/v4.01/csprd03/abnf/odata-abnf-construction-rules.txt
 		input := "CreateTime gt " + tokenValue
 		expect := []*Token{
-			&Token{Value: "CreateTime", Type: FilterTokenLiteral},
-			&Token{Value: "gt", Type: FilterTokenLogical},
-			&Token{Value: tokenValue, Type: tokenType},
+			{Value: "CreateTime", Type: FilterTokenLiteral},
+			{Value: "gt", Type: FilterTokenLogical},
+			{Value: tokenValue, Type: tokenType},
 		}
 		output, err := tokenizer.Tokenize(input)
 		if err != nil {
@@ -54,24 +54,24 @@ func TestFilterAnyArrayOfObjects(t *testing.T) {
 	tokenizer := FilterTokenizer()
 	input := "Tags/any(d:d/Key eq 'Site' and d/Value lt 10)"
 	expect := []*Token{
-		&Token{Value: "Tags", Type: FilterTokenLiteral},
-		&Token{Value: "/", Type: FilterTokenOp},
-		&Token{Value: "any", Type: FilterTokenLambda},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "d", Type: FilterTokenLiteral},
-		&Token{Value: ",", Type: FilterTokenColon}, // ':' is replaced by ',' which is the function argument separator.
-		&Token{Value: "d", Type: FilterTokenLiteral},
-		&Token{Value: "/", Type: FilterTokenNav},
-		&Token{Value: "Key", Type: FilterTokenLiteral},
-		&Token{Value: "eq", Type: FilterTokenLogical},
-		&Token{Value: "'Site'", Type: FilterTokenString},
-		&Token{Value: "and", Type: FilterTokenLogical},
-		&Token{Value: "d", Type: FilterTokenLiteral},
-		&Token{Value: "/", Type: FilterTokenNav},
-		&Token{Value: "Value", Type: FilterTokenLiteral},
-		&Token{Value: "lt", Type: FilterTokenLogical},
-		&Token{Value: "10", Type: FilterTokenInteger},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "Tags", Type: FilterTokenLiteral},
+		{Value: "/", Type: FilterTokenOp},
+		{Value: "any", Type: FilterTokenLambda},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "d", Type: FilterTokenLiteral},
+		{Value: ",", Type: FilterTokenColon}, // ':' is replaced by ',' which is the function argument separator.
+		{Value: "d", Type: FilterTokenLiteral},
+		{Value: "/", Type: FilterTokenNav},
+		{Value: "Key", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
+		{Value: "'Site'", Type: FilterTokenString},
+		{Value: "and", Type: FilterTokenLogical},
+		{Value: "d", Type: FilterTokenLiteral},
+		{Value: "/", Type: FilterTokenNav},
+		{Value: "Value", Type: FilterTokenLiteral},
+		{Value: "lt", Type: FilterTokenLogical},
+		{Value: "10", Type: FilterTokenInteger},
+		{Value: ")", Type: FilterTokenCloseParen},
 	}
 	output, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -89,16 +89,16 @@ func TestFilterAnyArrayOfPrimitiveTypes(t *testing.T) {
 	input := "Tags/any(d:d eq 'Site')"
 	{
 		expect := []*Token{
-			&Token{Value: "Tags", Type: FilterTokenLiteral},
-			&Token{Value: "/", Type: FilterTokenOp},
-			&Token{Value: "any", Type: FilterTokenLambda},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: "d", Type: FilterTokenLiteral},
-			&Token{Value: ",", Type: FilterTokenColon},
-			&Token{Value: "d", Type: FilterTokenLiteral},
-			&Token{Value: "eq", Type: FilterTokenLogical},
-			&Token{Value: "'Site'", Type: FilterTokenString},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
+			{Value: "Tags", Type: FilterTokenLiteral},
+			{Value: "/", Type: FilterTokenOp},
+			{Value: "any", Type: FilterTokenLambda},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: "d", Type: FilterTokenLiteral},
+			{Value: ",", Type: FilterTokenColon},
+			{Value: "d", Type: FilterTokenLiteral},
+			{Value: "eq", Type: FilterTokenLogical},
+			{Value: "'Site'", Type: FilterTokenString},
+			{Value: ")", Type: FilterTokenCloseParen},
 		}
 		output, err := tokenizer.Tokenize(input)
 		if err != nil {
@@ -286,9 +286,9 @@ func TestFilterGuid(t *testing.T) {
 	input := "GuidValue eq 01234567-89ab-cdef-0123-456789abcdef"
 
 	expect := []*Token{
-		&Token{Value: "GuidValue", Type: FilterTokenLiteral},
-		&Token{Value: "eq", Type: FilterTokenLogical},
-		&Token{Value: "01234567-89ab-cdef-0123-456789abcdef", Type: FilterTokenGuid},
+		{Value: "GuidValue", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
+		{Value: "01234567-89ab-cdef-0123-456789abcdef", Type: FilterTokenGuid},
 	}
 	output, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -305,10 +305,10 @@ func TestFilterDurationWithType(t *testing.T) {
 	input := "Task eq duration'P12DT23H59M59.999999999999S'"
 
 	expect := []*Token{
-		&Token{Value: "Task", Type: FilterTokenLiteral},
-		&Token{Value: "eq", Type: FilterTokenLogical},
+		{Value: "Task", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
 		// Note the duration token is extracted.
-		&Token{Value: "P12DT23H59M59.999999999999S", Type: FilterTokenDuration},
+		{Value: "P12DT23H59M59.999999999999S", Type: FilterTokenDuration},
 	}
 	output, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -326,9 +326,9 @@ func TestFilterDurationWithoutType(t *testing.T) {
 	input := "Task eq 'P12DT23H59M59.999999999999S'"
 
 	expect := []*Token{
-		&Token{Value: "Task", Type: FilterTokenLiteral},
-		&Token{Value: "eq", Type: FilterTokenLogical},
-		&Token{Value: "P12DT23H59M59.999999999999S", Type: FilterTokenDuration},
+		{Value: "Task", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
+		{Value: "P12DT23H59M59.999999999999S", Type: FilterTokenDuration},
 	}
 	output, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -346,11 +346,11 @@ func TestFilterAnyWithNoArgs(t *testing.T) {
 	input := "Tags/any()"
 	{
 		expect := []*Token{
-			&Token{Value: "Tags", Type: FilterTokenLiteral},
-			&Token{Value: "/", Type: FilterTokenOp},
-			&Token{Value: "any", Type: FilterTokenLambda},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
+			{Value: "Tags", Type: FilterTokenLiteral},
+			{Value: "/", Type: FilterTokenOp},
+			{Value: "any", Type: FilterTokenLambda},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: ")", Type: FilterTokenCloseParen},
 		}
 		output, err := tokenizer.Tokenize(input)
 		if err != nil {
@@ -384,11 +384,11 @@ func TestFilterDivby(t *testing.T) {
 		tokenizer := FilterTokenizer()
 		input := "Price div 2 gt 3.5"
 		expect := []*Token{
-			&Token{Value: "Price", Type: FilterTokenLiteral},
-			&Token{Value: "div", Type: FilterTokenOp},
-			&Token{Value: "2", Type: FilterTokenInteger},
-			&Token{Value: "gt", Type: FilterTokenLogical},
-			&Token{Value: "3.5", Type: FilterTokenFloat},
+			{Value: "Price", Type: FilterTokenLiteral},
+			{Value: "div", Type: FilterTokenOp},
+			{Value: "2", Type: FilterTokenInteger},
+			{Value: "gt", Type: FilterTokenLogical},
+			{Value: "3.5", Type: FilterTokenFloat},
 		}
 		output, err := tokenizer.Tokenize(input)
 		if err != nil {
@@ -404,11 +404,11 @@ func TestFilterDivby(t *testing.T) {
 		tokenizer := FilterTokenizer()
 		input := "Price divby 2 gt 3.5"
 		expect := []*Token{
-			&Token{Value: "Price", Type: FilterTokenLiteral},
-			&Token{Value: "divby", Type: FilterTokenOp},
-			&Token{Value: "2", Type: FilterTokenInteger},
-			&Token{Value: "gt", Type: FilterTokenLogical},
-			&Token{Value: "3.5", Type: FilterTokenFloat},
+			{Value: "Price", Type: FilterTokenLiteral},
+			{Value: "divby", Type: FilterTokenOp},
+			{Value: "2", Type: FilterTokenInteger},
+			{Value: "gt", Type: FilterTokenLogical},
+			{Value: "3.5", Type: FilterTokenFloat},
 		}
 		output, err := tokenizer.Tokenize(input)
 		if err != nil {
@@ -427,8 +427,8 @@ func TestFilterNotBooleanProperty(t *testing.T) {
 	input := "not Enabled"
 	{
 		expect := []*Token{
-			&Token{Value: "not", Type: FilterTokenLogical},
-			&Token{Value: "Enabled", Type: FilterTokenLiteral},
+			{Value: "not", Type: FilterTokenLogical},
+			{Value: "Enabled", Type: FilterTokenLiteral},
 		}
 		output, err := tokenizer.Tokenize(input)
 		if err != nil {
@@ -464,12 +464,12 @@ func TestFilterNotWithNoSpace(t *testing.T) {
 	input := "not(City eq 'Seattle')"
 	{
 		expect := []*Token{
-			&Token{Value: "not", Type: FilterTokenLogical},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: "City", Type: FilterTokenLiteral},
-			&Token{Value: "eq", Type: FilterTokenLogical},
-			&Token{Value: "'Seattle'", Type: FilterTokenString},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
+			{Value: "not", Type: FilterTokenLogical},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: "City", Type: FilterTokenLiteral},
+			{Value: "eq", Type: FilterTokenLogical},
+			{Value: "'Seattle'", Type: FilterTokenString},
+			{Value: ")", Type: FilterTokenCloseParen},
 		}
 		output, err := tokenizer.Tokenize(input)
 		if err != nil {
@@ -506,15 +506,15 @@ func TestFilterInOperator(t *testing.T) {
 	input := "City in ( 'Seattle', 'Atlanta', 'Paris' )"
 
 	expect := []*Token{
-		&Token{Value: "City", Type: FilterTokenLiteral},
-		&Token{Value: "in", Type: FilterTokenLogical},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "'Seattle'", Type: FilterTokenString},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "'Atlanta'", Type: FilterTokenString},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "'Paris'", Type: FilterTokenString},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "City", Type: FilterTokenLiteral},
+		{Value: "in", Type: FilterTokenLogical},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "'Seattle'", Type: FilterTokenString},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "'Atlanta'", Type: FilterTokenString},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "'Paris'", Type: FilterTokenString},
+		{Value: ")", Type: FilterTokenCloseParen},
 	}
 	tokens, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -530,13 +530,13 @@ func TestFilterInOperator(t *testing.T) {
 		t.Error(err)
 	}
 	expect = []*Token{
-		&Token{Value: "City", Type: FilterTokenLiteral},
-		&Token{Value: "'Seattle'", Type: FilterTokenString},
-		&Token{Value: "'Atlanta'", Type: FilterTokenString},
-		&Token{Value: "'Paris'", Type: FilterTokenString},
-		&Token{Value: "3", Type: TokenTypeArgCount},
-		&Token{Value: TokenListExpr, Type: TokenTypeListExpr},
-		&Token{Value: "in", Type: FilterTokenLogical},
+		{Value: "City", Type: FilterTokenLiteral},
+		{Value: "'Seattle'", Type: FilterTokenString},
+		{Value: "'Atlanta'", Type: FilterTokenString},
+		{Value: "'Paris'", Type: FilterTokenString},
+		{Value: "3", Type: TokenTypeArgCount},
+		{Value: TokenListExpr, Type: TokenTypeListExpr},
+		{Value: "in", Type: FilterTokenLogical},
 	}
 	result, err = CompareQueue(expect, postfix)
 	if !result {
@@ -570,11 +570,11 @@ func TestFilterInOperatorSingleValue(t *testing.T) {
 	input := "City in ( 'Seattle' )"
 
 	expect := []*Token{
-		&Token{Value: "City", Type: FilterTokenLiteral},
-		&Token{Value: "in", Type: FilterTokenLogical},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "'Seattle'", Type: FilterTokenString},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "City", Type: FilterTokenLiteral},
+		{Value: "in", Type: FilterTokenLogical},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "'Seattle'", Type: FilterTokenString},
+		{Value: ")", Type: FilterTokenCloseParen},
 	}
 	tokens, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -590,11 +590,11 @@ func TestFilterInOperatorSingleValue(t *testing.T) {
 		t.Error(err)
 	}
 	expect = []*Token{
-		&Token{Value: "City", Type: FilterTokenLiteral},
-		&Token{Value: "'Seattle'", Type: FilterTokenString},
-		&Token{Value: "1", Type: TokenTypeArgCount},
-		&Token{Value: TokenListExpr, Type: TokenTypeListExpr},
-		&Token{Value: "in", Type: FilterTokenLogical},
+		{Value: "City", Type: FilterTokenLiteral},
+		{Value: "'Seattle'", Type: FilterTokenString},
+		{Value: "1", Type: TokenTypeArgCount},
+		{Value: TokenListExpr, Type: TokenTypeListExpr},
+		{Value: "in", Type: FilterTokenLogical},
 	}
 	result, err = CompareQueue(expect, postfix)
 	if !result {
@@ -626,10 +626,10 @@ func TestFilterInOperatorEmptyList(t *testing.T) {
 	input := "City in ( )"
 
 	expect := []*Token{
-		&Token{Value: "City", Type: FilterTokenLiteral},
-		&Token{Value: "in", Type: FilterTokenLogical},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "City", Type: FilterTokenLiteral},
+		{Value: "in", Type: FilterTokenLogical},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: ")", Type: FilterTokenCloseParen},
 	}
 	tokens, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -645,10 +645,10 @@ func TestFilterInOperatorEmptyList(t *testing.T) {
 		t.Error(err)
 	}
 	expect = []*Token{
-		&Token{Value: "City", Type: FilterTokenLiteral},
-		&Token{Value: "0", Type: TokenTypeArgCount},
-		&Token{Value: TokenListExpr, Type: TokenTypeListExpr},
-		&Token{Value: "in", Type: FilterTokenLogical},
+		{Value: "City", Type: FilterTokenLiteral},
+		{Value: "0", Type: TokenTypeArgCount},
+		{Value: TokenListExpr, Type: TokenTypeListExpr},
+		{Value: "in", Type: FilterTokenLogical},
 	}
 	result, err = CompareQueue(expect, postfix)
 	if !result {
@@ -682,34 +682,34 @@ func TestFilterInOperatorBothSides(t *testing.T) {
 	input := "(1, 2) in ( ('ab', 'cd'), (1, 2), ('abc', 'def') )"
 
 	expect := []*Token{
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "1", Type: FilterTokenInteger},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "2", Type: FilterTokenInteger},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
-		&Token{Value: "in", Type: FilterTokenLogical},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "1", Type: FilterTokenInteger},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "2", Type: FilterTokenInteger},
+		{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "in", Type: FilterTokenLogical},
+		{Value: "(", Type: FilterTokenOpenParen},
 
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "'ab'", Type: FilterTokenString},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "'cd'", Type: FilterTokenString},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
-		&Token{Value: ",", Type: FilterTokenComma},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "'ab'", Type: FilterTokenString},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "'cd'", Type: FilterTokenString},
+		{Value: ")", Type: FilterTokenCloseParen},
+		{Value: ",", Type: FilterTokenComma},
 
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "1", Type: FilterTokenInteger},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "2", Type: FilterTokenInteger},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
-		&Token{Value: ",", Type: FilterTokenComma},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "1", Type: FilterTokenInteger},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "2", Type: FilterTokenInteger},
+		{Value: ")", Type: FilterTokenCloseParen},
+		{Value: ",", Type: FilterTokenComma},
 
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "'abc'", Type: FilterTokenString},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "'def'", Type: FilterTokenString},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "'abc'", Type: FilterTokenString},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "'def'", Type: FilterTokenString},
+		{Value: ")", Type: FilterTokenCloseParen},
+		{Value: ")", Type: FilterTokenCloseParen},
 	}
 	tokens, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -725,30 +725,30 @@ func TestFilterInOperatorBothSides(t *testing.T) {
 		t.Error(err)
 	}
 	expect = []*Token{
-		&Token{Value: "1", Type: FilterTokenInteger},
-		&Token{Value: "2", Type: FilterTokenInteger},
-		&Token{Value: "2", Type: TokenTypeArgCount},
-		&Token{Value: TokenListExpr, Type: TokenTypeListExpr},
+		{Value: "1", Type: FilterTokenInteger},
+		{Value: "2", Type: FilterTokenInteger},
+		{Value: "2", Type: TokenTypeArgCount},
+		{Value: TokenListExpr, Type: TokenTypeListExpr},
 
-		&Token{Value: "'ab'", Type: FilterTokenString},
-		&Token{Value: "'cd'", Type: FilterTokenString},
-		&Token{Value: "2", Type: TokenTypeArgCount},
-		&Token{Value: TokenListExpr, Type: TokenTypeListExpr},
+		{Value: "'ab'", Type: FilterTokenString},
+		{Value: "'cd'", Type: FilterTokenString},
+		{Value: "2", Type: TokenTypeArgCount},
+		{Value: TokenListExpr, Type: TokenTypeListExpr},
 
-		&Token{Value: "1", Type: FilterTokenInteger},
-		&Token{Value: "2", Type: FilterTokenInteger},
-		&Token{Value: "2", Type: TokenTypeArgCount},
-		&Token{Value: TokenListExpr, Type: TokenTypeListExpr},
+		{Value: "1", Type: FilterTokenInteger},
+		{Value: "2", Type: FilterTokenInteger},
+		{Value: "2", Type: TokenTypeArgCount},
+		{Value: TokenListExpr, Type: TokenTypeListExpr},
 
-		&Token{Value: "'abc'", Type: FilterTokenString},
-		&Token{Value: "'def'", Type: FilterTokenString},
-		&Token{Value: "2", Type: TokenTypeArgCount},
-		&Token{Value: TokenListExpr, Type: TokenTypeListExpr},
+		{Value: "'abc'", Type: FilterTokenString},
+		{Value: "'def'", Type: FilterTokenString},
+		{Value: "2", Type: TokenTypeArgCount},
+		{Value: TokenListExpr, Type: TokenTypeListExpr},
 
-		&Token{Value: "3", Type: TokenTypeArgCount},
-		&Token{Value: TokenListExpr, Type: TokenTypeListExpr},
+		{Value: "3", Type: TokenTypeArgCount},
+		{Value: TokenListExpr, Type: TokenTypeListExpr},
 
-		&Token{Value: "in", Type: FilterTokenLogical},
+		{Value: "in", Type: FilterTokenLogical},
 	}
 	result, err = CompareQueue(expect, postfix)
 	if !result {
@@ -795,22 +795,22 @@ func TestFilterInOperatorWithFunc(t *testing.T) {
 
 	{
 		expect := []*Token{
-			&Token{Value: "City", Type: FilterTokenLiteral},
-			&Token{Value: "in", Type: FilterTokenLogical},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: "'Seattle'", Type: FilterTokenString},
-			&Token{Value: ",", Type: FilterTokenComma},
-			&Token{Value: "concat", Type: FilterTokenFunc},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: "'San'", Type: FilterTokenString},
-			&Token{Value: ",", Type: FilterTokenComma},
-			&Token{Value: "'Francisco'", Type: FilterTokenString},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
-			&Token{Value: ",", Type: FilterTokenComma},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: "'Atlanta'", Type: FilterTokenString},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
+			{Value: "City", Type: FilterTokenLiteral},
+			{Value: "in", Type: FilterTokenLogical},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: "'Seattle'", Type: FilterTokenString},
+			{Value: ",", Type: FilterTokenComma},
+			{Value: "concat", Type: FilterTokenFunc},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: "'San'", Type: FilterTokenString},
+			{Value: ",", Type: FilterTokenComma},
+			{Value: "'Francisco'", Type: FilterTokenString},
+			{Value: ")", Type: FilterTokenCloseParen},
+			{Value: ",", Type: FilterTokenComma},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: "'Atlanta'", Type: FilterTokenString},
+			{Value: ")", Type: FilterTokenCloseParen},
+			{Value: ")", Type: FilterTokenCloseParen},
 		}
 		output, err := tokenizer.Tokenize(input)
 		if err != nil {
@@ -849,16 +849,16 @@ func TestFilterNotInListExpr(t *testing.T) {
 
 	{
 		expect := []*Token{
-			&Token{Value: "not", Type: FilterTokenLogical},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: "City", Type: FilterTokenLiteral},
-			&Token{Value: "in", Type: FilterTokenLogical},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: "'Seattle'", Type: FilterTokenString},
-			&Token{Value: ",", Type: FilterTokenComma},
-			&Token{Value: "'Atlanta'", Type: FilterTokenString},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
+			{Value: "not", Type: FilterTokenLogical},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: "City", Type: FilterTokenLiteral},
+			{Value: "in", Type: FilterTokenLogical},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: "'Seattle'", Type: FilterTokenString},
+			{Value: ",", Type: FilterTokenComma},
+			{Value: "'Atlanta'", Type: FilterTokenString},
+			{Value: ")", Type: FilterTokenCloseParen},
+			{Value: ")", Type: FilterTokenCloseParen},
 		}
 		output, err := tokenizer.Tokenize(input)
 		if err != nil {
@@ -908,18 +908,18 @@ func TestFilterAll(t *testing.T) {
 	tokenizer := FilterTokenizer()
 	input := "Tags/all(d:d/Key eq 'Site')"
 	expect := []*Token{
-		&Token{Value: "Tags", Type: FilterTokenLiteral},
-		&Token{Value: "/", Type: FilterTokenOp},
-		&Token{Value: "all", Type: FilterTokenLambda},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "d", Type: FilterTokenLiteral},
-		&Token{Value: ",", Type: FilterTokenColon},
-		&Token{Value: "d", Type: FilterTokenLiteral},
-		&Token{Value: "/", Type: FilterTokenNav},
-		&Token{Value: "Key", Type: FilterTokenLiteral},
-		&Token{Value: "eq", Type: FilterTokenLogical},
-		&Token{Value: "'Site'", Type: FilterTokenString},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "Tags", Type: FilterTokenLiteral},
+		{Value: "/", Type: FilterTokenOp},
+		{Value: "all", Type: FilterTokenLambda},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "d", Type: FilterTokenLiteral},
+		{Value: ",", Type: FilterTokenColon},
+		{Value: "d", Type: FilterTokenLiteral},
+		{Value: "/", Type: FilterTokenNav},
+		{Value: "Key", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
+		{Value: "'Site'", Type: FilterTokenString},
+		{Value: ")", Type: FilterTokenCloseParen},
 	}
 	output, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -937,13 +937,13 @@ func TestFilterTokenizer(t *testing.T) {
 	tokenizer := FilterTokenizer()
 	input := "Name eq 'Milk' and Price lt 2.55"
 	expect := []*Token{
-		&Token{Value: "Name", Type: FilterTokenLiteral},
-		&Token{Value: "eq", Type: FilterTokenLogical},
-		&Token{Value: "'Milk'", Type: FilterTokenString},
-		&Token{Value: "and", Type: FilterTokenLogical},
-		&Token{Value: "Price", Type: FilterTokenLiteral},
-		&Token{Value: "lt", Type: FilterTokenLogical},
-		&Token{Value: "2.55", Type: FilterTokenFloat},
+		{Value: "Name", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
+		{Value: "'Milk'", Type: FilterTokenString},
+		{Value: "and", Type: FilterTokenLogical},
+		{Value: "Price", Type: FilterTokenLiteral},
+		{Value: "lt", Type: FilterTokenLogical},
+		{Value: "2.55", Type: FilterTokenFloat},
 	}
 	output, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -964,20 +964,20 @@ func TestFunction(t *testing.T) {
 	// GET serviceRoot/Airports?$filter=contains(Location/Address, 'San Francisco')
 	input := "contains(LastName, 'Smith') and FirstName eq 'John' and City eq 'Houston'"
 	expect := []*Token{
-		&Token{Value: "contains", Type: FilterTokenFunc},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "LastName", Type: FilterTokenLiteral},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "'Smith'", Type: FilterTokenString},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
-		&Token{Value: "and", Type: FilterTokenLogical},
-		&Token{Value: "FirstName", Type: FilterTokenLiteral},
-		&Token{Value: "eq", Type: FilterTokenLogical},
-		&Token{Value: "'John'", Type: FilterTokenString},
-		&Token{Value: "and", Type: FilterTokenLogical},
-		&Token{Value: "City", Type: FilterTokenLiteral},
-		&Token{Value: "eq", Type: FilterTokenLogical},
-		&Token{Value: "'Houston'", Type: FilterTokenString},
+		{Value: "contains", Type: FilterTokenFunc},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "LastName", Type: FilterTokenLiteral},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "'Smith'", Type: FilterTokenString},
+		{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "and", Type: FilterTokenLogical},
+		{Value: "FirstName", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
+		{Value: "'John'", Type: FilterTokenString},
+		{Value: "and", Type: FilterTokenLogical},
+		{Value: "City", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
+		{Value: "'Houston'", Type: FilterTokenString},
 	}
 	{
 		output, err := tokenizer.Tokenize(input)
@@ -1031,19 +1031,19 @@ func TestNestedFunction(t *testing.T) {
 	// Test ODATA syntax with nested function calls
 	input := "contains(LastName, toupper('Smith')) or FirstName eq 'John'"
 	expect := []*Token{
-		&Token{Value: "contains", Type: FilterTokenFunc},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "LastName", Type: FilterTokenLiteral},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "toupper", Type: FilterTokenFunc},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "'Smith'", Type: FilterTokenString},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
-		&Token{Value: "or", Type: FilterTokenLogical},
-		&Token{Value: "FirstName", Type: FilterTokenLiteral},
-		&Token{Value: "eq", Type: FilterTokenLogical},
-		&Token{Value: "'John'", Type: FilterTokenString},
+		{Value: "contains", Type: FilterTokenFunc},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "LastName", Type: FilterTokenLiteral},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "toupper", Type: FilterTokenFunc},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "'Smith'", Type: FilterTokenString},
+		{Value: ")", Type: FilterTokenCloseParen},
+		{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "or", Type: FilterTokenLogical},
+		{Value: "FirstName", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
+		{Value: "'John'", Type: FilterTokenString},
 	}
 	{
 		output, err := tokenizer.Tokenize(input)
@@ -1320,28 +1320,28 @@ func TestFilterIn(t *testing.T) {
 	tokenizer := FilterTokenizer()
 	input := "contains(LastName, 'Smith') and Site in ('London', 'Paris', 'San Francisco', 'Dallas') and FirstName eq 'John'"
 	expect := []*Token{
-		&Token{Value: "contains", Type: FilterTokenFunc},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "LastName", Type: FilterTokenLiteral},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "'Smith'", Type: FilterTokenString},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
-		&Token{Value: "and", Type: FilterTokenLogical},
-		&Token{Value: "Site", Type: FilterTokenLiteral},
-		&Token{Value: "in", Type: FilterTokenLogical},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "'London'", Type: FilterTokenString},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "'Paris'", Type: FilterTokenString},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "'San Francisco'", Type: FilterTokenString},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "'Dallas'", Type: FilterTokenString},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
-		&Token{Value: "and", Type: FilterTokenLogical},
-		&Token{Value: "FirstName", Type: FilterTokenLiteral},
-		&Token{Value: "eq", Type: FilterTokenLogical},
-		&Token{Value: "'John'", Type: FilterTokenString},
+		{Value: "contains", Type: FilterTokenFunc},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "LastName", Type: FilterTokenLiteral},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "'Smith'", Type: FilterTokenString},
+		{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "and", Type: FilterTokenLogical},
+		{Value: "Site", Type: FilterTokenLiteral},
+		{Value: "in", Type: FilterTokenLogical},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "'London'", Type: FilterTokenString},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "'Paris'", Type: FilterTokenString},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "'San Francisco'", Type: FilterTokenString},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "'Dallas'", Type: FilterTokenString},
+		{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "and", Type: FilterTokenLogical},
+		{Value: "FirstName", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
+		{Value: "'John'", Type: FilterTokenString},
 	}
 	{
 		output, err := tokenizer.Tokenize(input)
@@ -1434,13 +1434,13 @@ func TestFilterTokenizerFunc(t *testing.T) {
 	tokenizer := FilterTokenizer()
 	input := "not endswith(Name,'ilk')"
 	expect := []*Token{
-		&Token{Value: "not", Type: FilterTokenLogical},
-		&Token{Value: "endswith", Type: FilterTokenFunc},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "Name", Type: FilterTokenLiteral},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "'ilk'", Type: FilterTokenString},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "not", Type: FilterTokenLogical},
+		{Value: "endswith", Type: FilterTokenFunc},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "Name", Type: FilterTokenLiteral},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "'ilk'", Type: FilterTokenString},
+		{Value: ")", Type: FilterTokenCloseParen},
 	}
 	output, err := tokenizer.Tokenize(input)
 	if err != nil {
@@ -1699,14 +1699,14 @@ func TestSubstringofFunction(t *testing.T) {
 	}
 	{
 		expect := []*Token{
-			&Token{Value: "substringof", Type: FilterTokenFunc},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: "'Alfreds'", Type: FilterTokenString},
-			&Token{Value: ",", Type: FilterTokenComma},
-			&Token{Value: "CompanyName", Type: FilterTokenLiteral},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
-			&Token{Value: "eq", Type: FilterTokenLogical},
-			&Token{Value: "true", Type: FilterTokenBoolean},
+			{Value: "substringof", Type: FilterTokenFunc},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: "'Alfreds'", Type: FilterTokenString},
+			{Value: ",", Type: FilterTokenComma},
+			{Value: "CompanyName", Type: FilterTokenLiteral},
+			{Value: ")", Type: FilterTokenCloseParen},
+			{Value: "eq", Type: FilterTokenLogical},
+			{Value: "true", Type: FilterTokenBoolean},
 		}
 		result, err := CompareTokens(expect, tokens)
 		if !result {
@@ -1720,12 +1720,12 @@ func TestSubstringofFunction(t *testing.T) {
 	}
 	{
 		expect := []*Token{
-			&Token{Value: "'Alfreds'", Type: FilterTokenString},
-			&Token{Value: "CompanyName", Type: FilterTokenLiteral},
-			&Token{Value: "2", Type: TokenTypeArgCount}, // The number of function arguments.
-			&Token{Value: "substringof", Type: FilterTokenFunc},
-			&Token{Value: "true", Type: FilterTokenBoolean},
-			&Token{Value: "eq", Type: FilterTokenLogical},
+			{Value: "'Alfreds'", Type: FilterTokenString},
+			{Value: "CompanyName", Type: FilterTokenLiteral},
+			{Value: "2", Type: TokenTypeArgCount}, // The number of function arguments.
+			{Value: "substringof", Type: FilterTokenFunc},
+			{Value: "true", Type: FilterTokenBoolean},
+			{Value: "eq", Type: FilterTokenLogical},
 		}
 		result, err := CompareQueue(expect, output)
 		if !result {
@@ -1764,21 +1764,21 @@ func TestSubstringNestedFunction(t *testing.T) {
 	}
 	{
 		expect := []*Token{
-			&Token{Value: "substring", Type: FilterTokenFunc},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: "substring", Type: FilterTokenFunc},
-			&Token{Value: "(", Type: FilterTokenOpenParen},
-			&Token{Value: "'Francisco'", Type: FilterTokenString},
-			&Token{Value: ",", Type: FilterTokenComma},
-			&Token{Value: "1", Type: FilterTokenInteger},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
-			&Token{Value: ",", Type: FilterTokenComma},
-			&Token{Value: "3", Type: FilterTokenInteger},
-			&Token{Value: ",", Type: FilterTokenComma},
-			&Token{Value: "2", Type: FilterTokenInteger},
-			&Token{Value: ")", Type: FilterTokenCloseParen},
-			&Token{Value: "eq", Type: FilterTokenLogical},
-			&Token{Value: "'ci'", Type: FilterTokenString},
+			{Value: "substring", Type: FilterTokenFunc},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: "substring", Type: FilterTokenFunc},
+			{Value: "(", Type: FilterTokenOpenParen},
+			{Value: "'Francisco'", Type: FilterTokenString},
+			{Value: ",", Type: FilterTokenComma},
+			{Value: "1", Type: FilterTokenInteger},
+			{Value: ")", Type: FilterTokenCloseParen},
+			{Value: ",", Type: FilterTokenComma},
+			{Value: "3", Type: FilterTokenInteger},
+			{Value: ",", Type: FilterTokenComma},
+			{Value: "2", Type: FilterTokenInteger},
+			{Value: ")", Type: FilterTokenCloseParen},
+			{Value: "eq", Type: FilterTokenLogical},
+			{Value: "'ci'", Type: FilterTokenString},
 		}
 		result, err := CompareTokens(expect, tokens)
 		if !result {
@@ -1792,16 +1792,16 @@ func TestSubstringNestedFunction(t *testing.T) {
 	}
 	{
 		expect := []*Token{
-			&Token{Value: "'Francisco'", Type: FilterTokenString},
-			&Token{Value: "1", Type: FilterTokenInteger},
-			&Token{Value: "2", Type: TokenTypeArgCount}, // The number of function arguments.
-			&Token{Value: "substring", Type: FilterTokenFunc},
-			&Token{Value: "3", Type: FilterTokenInteger},
-			&Token{Value: "2", Type: FilterTokenInteger},
-			&Token{Value: "3", Type: TokenTypeArgCount}, // The number of function arguments.
-			&Token{Value: "substring", Type: FilterTokenFunc},
-			&Token{Value: "'ci'", Type: FilterTokenString},
-			&Token{Value: "eq", Type: FilterTokenLogical},
+			{Value: "'Francisco'", Type: FilterTokenString},
+			{Value: "1", Type: FilterTokenInteger},
+			{Value: "2", Type: TokenTypeArgCount}, // The number of function arguments.
+			{Value: "substring", Type: FilterTokenFunc},
+			{Value: "3", Type: FilterTokenInteger},
+			{Value: "2", Type: FilterTokenInteger},
+			{Value: "3", Type: TokenTypeArgCount}, // The number of function arguments.
+			{Value: "substring", Type: FilterTokenFunc},
+			{Value: "'ci'", Type: FilterTokenString},
+			{Value: "eq", Type: FilterTokenLogical},
 		}
 		result, err := CompareQueue(expect, output)
 		if !result {
@@ -1913,15 +1913,15 @@ func TestLambdaAnyNot(t *testing.T) {
 	}
 	{
 		expect := []*Token{
-			&Token{Value: "Price", Type: FilterTokenLiteral},
-			&Token{Value: "t", Type: FilterTokenLiteral},
-			&Token{Value: "12345", Type: FilterTokenInteger},
-			&Token{Value: "t", Type: FilterTokenLiteral},
-			&Token{Value: "eq", Type: FilterTokenLogical},
-			&Token{Value: "not", Type: FilterTokenLogical},
-			&Token{Value: "2", Type: TokenTypeArgCount},
-			&Token{Value: "any", Type: FilterTokenLambda},
-			&Token{Value: "/", Type: FilterTokenOp},
+			{Value: "Price", Type: FilterTokenLiteral},
+			{Value: "t", Type: FilterTokenLiteral},
+			{Value: "12345", Type: FilterTokenInteger},
+			{Value: "t", Type: FilterTokenLiteral},
+			{Value: "eq", Type: FilterTokenLogical},
+			{Value: "not", Type: FilterTokenLogical},
+			{Value: "2", Type: TokenTypeArgCount},
+			{Value: "any", Type: FilterTokenLambda},
+			{Value: "/", Type: FilterTokenOp},
 		}
 		var result bool
 		result, err = CompareQueue(expect, output)
@@ -2174,12 +2174,12 @@ func TestFilterTokenizerExists(t *testing.T) {
 	tokenizer := FilterTokenizer()
 	input := "exists(Name,false)"
 	expect := []*Token{
-		&Token{Value: "exists", Type: FilterTokenFunc},
-		&Token{Value: "(", Type: FilterTokenOpenParen},
-		&Token{Value: "Name", Type: FilterTokenLiteral},
-		&Token{Value: ",", Type: FilterTokenComma},
-		&Token{Value: "false", Type: FilterTokenBoolean},
-		&Token{Value: ")", Type: FilterTokenCloseParen},
+		{Value: "exists", Type: FilterTokenFunc},
+		{Value: "(", Type: FilterTokenOpenParen},
+		{Value: "Name", Type: FilterTokenLiteral},
+		{Value: ",", Type: FilterTokenComma},
+		{Value: "false", Type: FilterTokenBoolean},
+		{Value: ")", Type: FilterTokenCloseParen},
 	}
 	output, err := tokenizer.Tokenize(input)
 	if err != nil {

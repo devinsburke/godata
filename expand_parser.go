@@ -284,7 +284,7 @@ func SemanticizeExpandQuery(
 		if item.Path[0].Value == "*" {
 			// replace wildcard with a copy of every navigation property
 			for _, navProp := range service.NavigationPropertyLookup[entity] {
-				path := []*Token{&Token{Value: navProp.Name, Type: ExpandTokenLiteral}}
+				path := []*Token{{Value: navProp.Name, Type: ExpandTokenLiteral}}
 				newItem := &ExpandItem{
 					Path:   append(path, item.Path[1:]...),
 					Levels: item.Levels,

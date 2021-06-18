@@ -10,9 +10,9 @@ func TestSimpleMetadata(t *testing.T) {
 		Name: "TestEntity1",
 		Key:  &GoDataKey{PropertyRef: &GoDataPropertyRef{Name: "Id"}},
 		Properties: []*GoDataProperty{
-			&GoDataProperty{Name: "Id", Type: "Edm.Int32"},
-			&GoDataProperty{Name: "FirstName", Type: "Edm.String"},
-			&GoDataProperty{Name: "LastName", Type: "Edm.String"},
+			{Name: "Id", Type: "Edm.Int32"},
+			{Name: "FirstName", Type: "Edm.String"},
+			{Name: "LastName", Type: "Edm.String"},
 		},
 	}
 
