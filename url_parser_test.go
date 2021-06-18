@@ -229,7 +229,9 @@ func TestUrlParserStrictValidation(t *testing.T) {
 
 }
 
-func TestUnescapedSingleQuote(t *testing.T) {
+// TestUnescapeStringTokens tests string encoding rules specified in the ODATA ABNF:
+// http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_URLSyntax
+func TestUnescapeStringTokens(t *testing.T) {
 
 	testCases := []struct {
 		url string // The test URL
@@ -259,7 +261,6 @@ func TestUnescapedSingleQuote(t *testing.T) {
 		},
 		{
 			// Two consecutive single quotes.
-			// http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_URLSyntax
 			// One of the URL syntax rules for ODATA is that single quotes within string
 			// literals are represented as two consecutive single quotes.
 			// This is done to make the input strings in the ABNF test cases more readable.
@@ -274,7 +275,6 @@ func TestUnescapedSingleQuote(t *testing.T) {
 			},
 		},
 		{
-			// http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_URLSyntax
 			// Test single quotes escaped as %27.
 			url:      "/Books?$filter=Description eq 'O%27%27Neil'",
 			errRegex: nil,
@@ -286,7 +286,6 @@ func TestUnescapedSingleQuote(t *testing.T) {
 			},
 		},
 		{
-			// http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_URLSyntax
 			// Test single quotes escaped as %27.
 			// This time all single quotes are percent-encoded, including the outer single-quotes.
 			url:      "/Books?$filter=Description eq %27O%27%27Neil%27",
@@ -296,6 +295,18 @@ func TestUnescapedSingleQuote(t *testing.T) {
 				{"Description", 1},
 				// Percent-encoded character %27 must be decoded to single quote.
 				{"'O'Neil'", 1},
+			},
+		},
+		{
+			// According to RFC 1738, URLs should not include UTF-8 characters,
+			// but the string tokens are parsed anyway.
+			url:      "/Books?$filter=Description eq '♺⛺⛵⚡'",
+			errRegex: nil,
+			expectedTree: []expectedParseNode{
+				{"eq", 0},
+				{"Description", 1},
+				// Percent-encoded character %27 must be decoded to single quote.
+				{"'♺⛺⛵⚡'", 1},
 			},
 		},
 	}
