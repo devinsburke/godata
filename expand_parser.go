@@ -332,10 +332,22 @@ func semanticizeExpandItem(
 		}
 		target.SemanticReference = entityType
 
-		SemanticizeFilterQuery(item.Filter, service, entityType)
-		SemanticizeExpandQuery(item.Expand, service, entityType)
-		SemanticizeSelectQuery(item.Select, service, entityType)
-		SemanticizeOrderByQuery(item.OrderBy, service, entityType)
+		err = SemanticizeFilterQuery(item.Filter, service, entityType)
+		if err == nil {
+			return err
+		}
+		err = SemanticizeExpandQuery(item.Expand, service, entityType)
+		if err == nil {
+			return err
+		}
+		err = SemanticizeSelectQuery(item.Select, service, entityType)
+		if err == nil {
+			return err
+		}
+		err = SemanticizeOrderByQuery(item.OrderBy, service, entityType)
+		if err == nil {
+			return err
+		}
 
 	} else {
 		return BadRequestError("Entity type " + entity.Name + " has no navigational property " + target.Value)

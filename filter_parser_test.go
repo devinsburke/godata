@@ -1457,7 +1457,9 @@ func BenchmarkFilterTokenizer(b *testing.B) {
 	t := FilterTokenizer()
 	for i := 0; i < b.N; i++ {
 		input := "Name eq 'Milk' and Price lt 2.55"
-		t.Tokenize(input)
+		if _, err := t.Tokenize(input); err != nil {
+			b.Fatalf("Failed to tokenize filter: %v", err)
+		}
 	}
 }
 

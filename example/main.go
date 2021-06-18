@@ -18,8 +18,8 @@ func AuthorizationMiddleware() {
 
 }
 
+/*
 func main() {
-	/*
 		provider := &MySQLGoDataProvider{
 			Hostname: "localhost",
 			Port:     "3306",
@@ -72,10 +72,10 @@ func main() {
 
 		service := BuildService(provider)
 		service.ListenAndServe(":8080", "http://localhost")
-	*/
 
 	//service.AttachMiddleware(CacheMiddleware)
 	//service.AttachMiddleware(AuthorizationMiddleware)
 	//service.BindAction(HelloWorld)
 	//service.BindFunction(HelloWorld)
 }
+*/
