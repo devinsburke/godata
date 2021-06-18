@@ -1,3 +1,5 @@
+[![Go](https://github.com/CiscoM31/godata/actions/workflows/go.yml/badge.svg)](https://github.com/CiscoM31/godata/actions/workflows/go.yml)
+
 GoData
 ======
 
