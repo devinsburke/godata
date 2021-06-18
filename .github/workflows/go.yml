@@ -2,7 +2,7 @@ name: Go
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, master-intersight ]
   pull_request:
     branches: [ master, master-intersight ]
 
