@@ -457,6 +457,24 @@ func TestFilterNotBooleanProperty(t *testing.T) {
 
 }
 
+func TestFilterEmptyStringToken(t *testing.T) {
+	tokenizer := FilterTokenizer()
+	input := "City eq ''"
+	expect := []*Token{
+		{Value: "City", Type: FilterTokenLiteral},
+		{Value: "eq", Type: FilterTokenLogical},
+		{Value: "''", Type: FilterTokenString},
+	}
+	output, err := tokenizer.Tokenize(input)
+	if err != nil {
+		t.Error(err)
+	}
+	result, err := CompareTokens(expect, output)
+	if !result {
+		t.Error(err)
+	}
+}
+
 // Note: according to ODATA ABNF notation, there must be a space between not and open parenthesis.
 // http://docs.oasis-open.org/odata/odata/v4.01/csprd03/abnf/odata-abnf-construction-rules.txt
 func TestFilterNotWithNoSpace(t *testing.T) {
