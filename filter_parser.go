@@ -146,6 +146,9 @@ func FilterTokenizer() *Tokenizer {
 func unescapeTokenString(in string) string {
 	// The call to ReplaceAll() implements
 	// SQUOTE-in-string = SQUOTE SQUOTE ; two consecutive single quotes represent one within a string literal
+	if in == "''" {
+		return in
+	}
 	return strings.ReplaceAll(in, "''", "'")
 }
 
