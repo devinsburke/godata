@@ -1,7 +1,7 @@
 package mysql
 
 import (
-	. "github.com/CiscoM31/godata"
+	. "github.com/CiscoM31/godata/v2"
 	//"database/sql"
 	//"errors"
 	//"github.com/go-sql-driver/mysql"
