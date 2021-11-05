@@ -1,3 +1,3 @@
-module github.com/CiscoM31/godata
+module github.com/CiscoM31/godata/v2
 
-go 1.16
+go 1.17
