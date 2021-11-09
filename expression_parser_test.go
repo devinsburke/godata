@@ -2,6 +2,7 @@ package godata
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -68,7 +69,10 @@ func TestValidBooleanExpressionSyntax(t *testing.T) {
 		"not true",
 		"not false",
 		"not (not true)",
-		//"not not true", // TODO: I think this should work. 'not not true' is true
+		// TODO: this should work because 'not' is inherently right-associative.
+		// I.e. it should be interpreted as not (not true)
+		// If it were left-associative, it would be interpreted as (not not) true, which is invalid.
+		"not not true",
 		// String functions
 		"contains(CompanyName,'freds')",
 		"endswith(CompanyName,'Futterkiste')",
@@ -85,12 +89,12 @@ func TestValidBooleanExpressionSyntax(t *testing.T) {
 		"trim(CompanyName) eq 'Alfreds Futterkiste'",
 		"concat(concat(City,', '), Country) eq 'Berlin, Germany'",
 		// GUID
-		"GuidValue eq 01234567-89ab-cdef-0123-456789abcdef", // TODO According to ODATA ABNF notation, GUID values do not have quotes.
+		"GuidValue eq 01234567-89ab-cdef-0123-456789abcdef", // According to ODATA ABNF notation, GUID values do not have quotes.
 		// Date and Time functions
 		"StartDate eq 2012-12-03",
 		"DateTimeOffsetValue eq 2012-12-03T07:16:23Z",
 		// duration      = [ "duration" ] SQUOTE durationValue SQUOTE
-		// "DurationValue eq duration'P12DT23H59M59.999999999999S'", // TODO See ODATA ABNF notation
+		"DurationValue eq duration'P12DT23H59M59.999999999999S'", // See ODATA ABNF notation
 		"TimeOfDayValue eq 07:59:59.999",
 		"year(BirthDate) eq 0",
 		"month(BirthDate) eq 12",
@@ -106,7 +110,7 @@ func TestValidBooleanExpressionSyntax(t *testing.T) {
 		"date(StartTime) ne date(EndTime)",
 		"totaloffsetminutes(StartTime) eq 60",
 		"StartTime eq mindatetime()",
-		// "totalseconds(EndTime sub StartTime) lt duration'PT23H59'", // TODO The totalseconds function returns the duration of the value in total seconds, including fractional seconds.
+		"totalseconds(EndTime sub StartTime) lt duration'PT23H59M'", // The totalseconds function returns the duration of the value in total seconds, including fractional seconds.
 		"EndTime eq maxdatetime()",
 		"time(StartTime) le StartOfDay",
 		"time('2015-10-14T23:30:00.104+02:00') lt now()",
@@ -199,17 +203,16 @@ func TestValidBooleanExpressionSyntax(t *testing.T) {
 	p := NewExpressionParser()
 	p.ExpectBoolExpr = true
 	for _, input := range queries {
+		t.Logf("Testing expression %s", input)
 		q, err := p.ParseExpressionString(input)
 		if err != nil {
 			t.Errorf("Error parsing query '%s'. Error: %v", input, err)
 		} else {
 			if q.Tree == nil {
 				t.Errorf("Error parsing query '%s'. Tree is nil", input)
-			}
-			if q.Tree.Token == nil {
+			} else if q.Tree.Token == nil {
 				t.Errorf("Error parsing query '%s'. Root token is nil", input)
-			}
-			if q.Tree.Token.Type == ExpressionTokenLiteral {
+			} else if q.Tree.Token.Type == ExpressionTokenLiteral {
 				t.Errorf("Error parsing query '%s'. Unexpected root token type: %+v", input, q.Tree.Token)
 			}
 		}
@@ -218,29 +221,45 @@ func TestValidBooleanExpressionSyntax(t *testing.T) {
 }
 
 // The URLs below are not valid ODATA syntax, the parser should return an error.
+func TestInvalidBooleanExpressionSyntax(t *testing.T) {
+	queries := []string{
+		"(TRUE)",  // Should be true lowercase
+		"(City)",  // The literal City is not boolean
+		"12345",   // Number 12345 is not a boolean expression
+		"0",       // Number 0 is not a boolean expression
+		"'123'",   // String '123' is not a boolean expression
+		"TRUE",    // Should be 'true' lowercase
+		"FALSE",   // Should be 'false' lowercase
+		"yes",     // yes is not a boolean expression, though it's a literal value
+		"no",      // yes is not a boolean expression, though it's a literal value
+		"add 2 3", // Missing operands
+		"City",    // Just a single literal
+		"Tags/any(var:var/Key eq 'Site') orTags/any(var:var/Key eq 'Site')",
+		"contains(Name, 'a', 'b', 'c', 'd')", // Too many function arguments
+	}
+	p := NewExpressionParser()
+	p.ExpectBoolExpr = true
+	for _, input := range queries {
+		q, err := p.ParseExpressionString(input)
+		if err == nil {
+			// The parser has incorrectly determined the syntax is valid.
+			t.Errorf("The expression '%s' is not valid ODATA syntax. The ODATA parser should return an error. Tree:\n%v", input, q.Tree)
+		}
+	}
+}
+
 func TestInvalidExpressionSyntax(t *testing.T) {
 	queries := []string{
 		"()", // It's not a boolean expression
-		"(TRUE)",
-		"(City)",
 		"(",
 		"((((",
 		")",
-		"12345",                                // Number 12345 is not a boolean expression
-		"0",                                    // Number 0 is not a boolean expression
-		"'123'",                                // String '123' is not a boolean expression
-		"TRUE",                                 // Should be 'true' lowercase
-		"FALSE",                                // Should be 'false' lowercase
-		"yes",                                  // yes is not a boolean expression
-		"no",                                   // yes is not a boolean expression
 		"",                                     // Empty string.
 		"eq",                                   // Just a single logical operator
 		"and",                                  // Just a single logical operator
 		"add",                                  // Just a single arithmetic operator
 		"add ",                                 // Just a single arithmetic operator
 		"add 2",                                // Missing operands
-		"add 2 3",                              // Missing operands
-		"City",                                 // Just a single literal
 		"City City City City",                  // Sequence of literals
 		"City eq",                              // Missing operand
 		"City eq (",                            // Wrong operand
@@ -255,8 +274,6 @@ func TestInvalidExpressionSyntax(t *testing.T) {
 		"not (City eq 'Dallas'))",              // Extraneous closing parenthesis
 		"not City eq 'Dallas')",                // Missing open parenthesis
 		"City eq 'Dallas' orCity eq 'Houston'", // missing space between or and City
-		// TODO: the query below should fail.
-		//"Tags/any(var:var/Key eq 'Site') orTags/any(var:var/Key eq 'Site')",
 		"not (City eq 'Dallas') and Name eq 'Houston')",
 		"Tags/all()",                   // The all operator cannot be used without an argument expression.
 		"LastName contains 'Smith'",    // Previously the godata library was not returning an error.
@@ -268,11 +285,31 @@ func TestInvalidExpressionSyntax(t *testing.T) {
 		"contains(LastName, 'Smith'",   // Missing closing parenthesis
 		"contains LastName, 'Smith')",  // Missing open parenthesis
 		"City eq 'Dallas' 'Houston'",   // extraneous string value
-		//"contains(Name, 'a', 'b', 'c', 'd')", // Too many function arguments
+		"(numCore neq 12)",             // Invalid operator. It should be 'ne'
+		"numCore neq 12",               // Invalid operator. It should be 'ne'
+		"(a b c d e)",                  // This is not a list.
+		"(a, b, )",                     // This is not a list.
+		"(a, , b)",                     // This is not a list.
+		"(, a, b)",                     // This is not a list.
+		"(a, not b c)",                 // Missing comma between (not b) and (c)
+		",",                            // A comma by itself is not an expression
+		",,,",                          // A comma by itself is not an expression
+		"(,)",                          // A comma by itself is not an expression
+		"contains(LastName, 'Smith'),", // Extra comma after the function call
+		"contains(LastName, 'Smith',)", // Extra comma after the last argument
+		"contains(,LastName, 'Smith')", // Extra comma before the first argument
+		"eq eq eq",                     // Invalid sequence of operators
+		"not not",                      // Invalid sequence of operators
+		"true true",                    // Invalid sequence of booleans
+		"1 2 3",                        // Invalid sequence of numbers
+		"1.4 2.34 3.1415",              // Invalid sequence of numbers
+		"a b c",                        // Invalid sequence of literals.
+		"'a' 'b' 'c'",                  // Invalid sequence of strings.
 	}
 	p := NewExpressionParser()
-	p.ExpectBoolExpr = true
+	p.ExpectBoolExpr = false
 	for _, input := range queries {
+		t.Logf("testing: %s", input)
 		q, err := p.ParseExpressionString(input)
 		if err == nil {
 			// The parser has incorrectly determined the syntax is valid.
@@ -318,7 +355,10 @@ func CompareTokens(expected, actual []*Token) (bool, error) {
 	return true, nil
 }
 
-func CompareQueue(expect []*Token, b *tokenQueue) (bool, error) {
+func CompareQueue(expect []*Token, b *tokenQueue) error {
+	if b == nil {
+		return fmt.Errorf("Got nil token queue")
+	}
 	bl := func() int {
 		if b.Empty() {
 			return 0
@@ -330,22 +370,22 @@ func CompareQueue(expect []*Token, b *tokenQueue) (bool, error) {
 		return l
 	}()
 	if len(expect) != bl {
-		return false, fmt.Errorf("Postfix queue unexpected length. Got len=%d, expected %d. queue=%v",
+		return fmt.Errorf("Postfix queue unexpected length. Got len=%d, expected %d. queue=%v",
 			bl, len(expect), b)
 	}
 	node := b.Head
 	for i := range expect {
 		if expect[i].Type != node.Token.Type {
-			return false, fmt.Errorf("Postfix token types at index %d. Got: %v, expected: %v. Expected value: %v",
+			return fmt.Errorf("Postfix token types at index %d. Got: %v, expected: %v. Expected value: %v",
 				i, node.Token.Type, expect[i].Type, expect[i].Value)
 		}
 		if expect[i].Value != node.Token.Value {
-			return false, fmt.Errorf("Postfix token values at index %d. Got: %v, expected: %v",
+			return fmt.Errorf("Postfix token values at index %d. Got: %v, expected: %v",
 				i, node.Token.Value, expect[i].Value)
 		}
 		node = node.Next
 	}
-	return true, nil
+	return nil
 }
 
 func printTokens(tokens []*Token) {
@@ -363,7 +403,11 @@ func CompareTree(node *ParseNode, expect []expectedParseNode, pos *int, level in
 		return fmt.Errorf("Unexpected token at pos %d. Got %s, expected no value",
 			*pos, node.Token.Value)
 	}
-	if node.Token.Value != expect[*pos].Value {
+	if node == nil {
+		return fmt.Errorf("Node should not be nil")
+	}
+	if node.Token.Value !=
+		expect[*pos].Value {
 		return fmt.Errorf("Unexpected token at pos %d. Got %s -> %d, expected: %s -> %d",
 			*pos, node.Token.Value, level, expect[*pos].Value, expect[*pos].Depth)
 	}
@@ -409,7 +453,7 @@ func TestExpressions(t *testing.T) {
 			continue
 		}
 		if testCase.postfixTokens != nil {
-			if result, err := CompareQueue(testCase.postfixTokens, output); !result {
+			if err := CompareQueue(testCase.postfixTokens, output); err != nil {
 				t.Errorf("Unexpected postfix tokens: %v", err)
 				continue
 			}
@@ -426,4 +470,55 @@ func TestExpressions(t *testing.T) {
 		}
 	}
 
+}
+func TestDuration(t *testing.T) {
+	testCases := []struct {
+		value string
+		valid bool
+	}{
+		{value: "duration'P12DT23H59M59.999999999999S'", valid: true},
+		// three years, six months, four days, twelve hours, thirty minutes, and five seconds
+		{value: "duration'P3Y6M4DT12H30M5S'", valid: true},
+		// Date and time elements including their designator may be omitted if their value is zero,
+		// and lower-order elements may also be omitted for reduced precision.
+		{value: "duration'P23DT23H'", valid: true},
+		{value: "duration'P4Y'", valid: true},
+		// However, at least one element must be present,
+		// thus "P" is not a valid representation for a duration of 0 seconds.
+		{value: "duration'P'", valid: false},
+		// "PT0S" or "P0D", however, are both valid and represent the same duration.
+		{value: "duration'PT0S'", valid: true},
+		{value: "duration'P0D'", valid: true},
+		// To resolve ambiguity, "P1M" is a one-month duration and "PT1M" is a one-minute duration
+		{value: "duration'P1M'", valid: true},
+		{value: "duration'PT1M'", valid: true},
+		// The standard does not prohibit date and time values in a duration representation
+		// from exceeding their "carry over points" except as noted below.
+		// Thus, "PT36H" could be used as well as "P1DT12H" for representing the same duration.
+		{value: "duration'PT36H'", valid: true},
+		{value: "duration'P1DT12H'", valid: true},
+		{value: "duration'PT23H59M'", valid: true},
+		{value: "duration'PT23H59'", valid: false}, // missing units
+
+		{value: "duration'H0D'", valid: false},
+		{value: "foo", valid: false},
+
+		// TODO: the duration values below should be valid
+		// The smallest value used may also have a decimal fraction,[35] as in "P0.5Y" to indicate half a year.
+		{value: "duration'P0.5Y'", valid: false}, // half a year
+		{value: "duration'P0.5M'", valid: false}, // half a month
+		// This decimal fraction may be specified with either a comma or a full stop, as in "P0,5Y" or "P0.5Y".
+		{value: "duration'P0,5Y'", valid: false},
+	}
+	re, err := regexp.Compile(tokenDurationRe)
+	if err != nil {
+		t.Fatalf("Invalid regex: %v", err)
+	}
+	for _, testCase := range testCases {
+		m := re.MatchString(testCase.value)
+		if m != testCase.valid {
+			t.Errorf("Value: %s. Expected regex match: %v, got %v",
+				testCase.value, testCase.valid, m)
+		}
+	}
 }

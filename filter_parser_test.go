@@ -1,7 +1,6 @@
 package godata
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 )
@@ -550,8 +549,7 @@ func TestFilterInOperator(t *testing.T) {
 		{Value: TokenListExpr, Type: TokenTypeListExpr},
 		{Value: "in", Type: ExpressionTokenLogical},
 	}
-	result, err = CompareQueue(expect, postfix)
-	if !result {
+	if err := CompareQueue(expect, postfix); err != nil {
 		t.Error(err)
 	}
 
@@ -607,8 +605,7 @@ func TestFilterInOperatorSingleValue(t *testing.T) {
 		{Value: TokenListExpr, Type: TokenTypeListExpr},
 		{Value: "in", Type: ExpressionTokenLogical},
 	}
-	result, err = CompareQueue(expect, postfix)
-	if !result {
+	if err := CompareQueue(expect, postfix); err != nil {
 		t.Error(err)
 	}
 
@@ -643,16 +640,16 @@ func TestFilterInOperatorEmptyList(t *testing.T) {
 	}
 	tokens, err := tokenizer.Tokenize(input)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	result, err := CompareTokens(expect, tokens)
 	if !result {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	var postfix *tokenQueue
 	postfix, err = GlobalFilterParser.InfixToPostfix(tokens)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	expect = []*Token{
 		{Value: "City", Type: ExpressionTokenLiteral},
@@ -660,14 +657,13 @@ func TestFilterInOperatorEmptyList(t *testing.T) {
 		{Value: TokenListExpr, Type: TokenTypeListExpr},
 		{Value: "in", Type: ExpressionTokenLogical},
 	}
-	result, err = CompareQueue(expect, postfix)
-	if !result {
-		t.Error(err)
+	if err := CompareQueue(expect, postfix); err != nil {
+		t.Fatal(err)
 	}
 
 	tree, err := GlobalFilterParser.PostfixToTree(postfix)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	var treeExpect []expectedParseNode = []expectedParseNode{
@@ -722,16 +718,16 @@ func TestFilterInOperatorBothSides(t *testing.T) {
 	}
 	tokens, err := tokenizer.Tokenize(input)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	result, err := CompareTokens(expect, tokens)
 	if !result {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	var postfix *tokenQueue
 	postfix, err = GlobalFilterParser.InfixToPostfix(tokens)
 	if err != nil {
-		t.Error(err)
+		t.Fatalf("failed to convert from infix to postfix: %v", err)
 	}
 	expect = []*Token{
 		{Value: "1", Type: ExpressionTokenInteger},
@@ -740,34 +736,32 @@ func TestFilterInOperatorBothSides(t *testing.T) {
 		{Value: TokenListExpr, Type: TokenTypeListExpr},
 
 		{Value: "'ab'", Type: ExpressionTokenString},
-		{Value: "'cd'", Type: ExpressionTokenString},
+		{Value: "'cd'", Type: ExpressionTokenString}, // idx 5
 		{Value: "2", Type: TokenTypeArgCount},
 		{Value: TokenListExpr, Type: TokenTypeListExpr},
 
 		{Value: "1", Type: ExpressionTokenInteger},
 		{Value: "2", Type: ExpressionTokenInteger},
-		{Value: "2", Type: TokenTypeArgCount},
+		{Value: "2", Type: TokenTypeArgCount}, // idx 10
 		{Value: TokenListExpr, Type: TokenTypeListExpr},
 
 		{Value: "'abc'", Type: ExpressionTokenString},
 		{Value: "'def'", Type: ExpressionTokenString},
 		{Value: "2", Type: TokenTypeArgCount},
-		{Value: TokenListExpr, Type: TokenTypeListExpr},
+		{Value: TokenListExpr, Type: TokenTypeListExpr}, // idx 15
 
 		{Value: "3", Type: TokenTypeArgCount},
 		{Value: TokenListExpr, Type: TokenTypeListExpr},
 
 		{Value: "in", Type: ExpressionTokenLogical},
 	}
-	result, err = CompareQueue(expect, postfix)
-	if !result {
-		fmt.Printf("postfix notation: %s\n", postfix.String())
-		t.Error(err)
+	if err := CompareQueue(expect, postfix); err != nil {
+		t.Fatalf("Unexpected postfix notation: %v. Error: %v", postfix, err)
 	}
 
 	tree, err := GlobalFilterParser.PostfixToTree(postfix)
 	if err != nil {
-		t.Error(err)
+		t.Fatalf("Failed to convert postfix to tree: %v", err)
 	}
 
 	var treeExpect []expectedParseNode = []expectedParseNode{
@@ -1148,7 +1142,7 @@ func TestValidFilterSyntax(t *testing.T) {
 		"date(StartTime) ne date(EndTime)",
 		"totaloffsetminutes(StartTime) eq 60",
 		"StartTime eq mindatetime()",
-		// "totalseconds(EndTime sub StartTime) lt duration'PT23H59'", // TODO The totalseconds function returns the duration of the value in total seconds, including fractional seconds.
+		"totalseconds(EndTime sub StartTime) lt duration'PT23H59M'", // TODO The totalseconds function returns the duration of the value in total seconds, including fractional seconds.
 		"EndTime eq maxdatetime()",
 		"time(StartTime) le StartOfDay",
 		"time('2015-10-14T23:30:00.104+02:00') lt now()",
@@ -1308,6 +1302,9 @@ func TestInvalidFilterSyntax(t *testing.T) {
 		"contains(LastName, 'Smith'",   // Missing closing parenthesis
 		"contains LastName, 'Smith')",  // Missing open parenthesis
 		"City eq 'Dallas' 'Houston'",   // extraneous string value
+		"(numCore neq 12)",             // Invalid operator. It should be 'ne'
+		"(a b c d)",                    // Invalid list
+		"numCore neq 12",               // Invalid operator. It should be 'ne'
 		//"contains(Name, 'a', 'b', 'c', 'd')", // Too many function arguments
 	}
 	for _, input := range queries {
@@ -1315,7 +1312,6 @@ func TestInvalidFilterSyntax(t *testing.T) {
 		if err == nil {
 			// The parser has incorrectly determined the syntax is valid.
 			t.Errorf("The query '$filter=%s' is not valid ODATA syntax. The ODATA parser should return an error. Tree:\n%v", input, q.Tree)
-			return
 		}
 	}
 }
@@ -1673,8 +1669,7 @@ func TestFilterSubstringofFunction(t *testing.T) {
 			{Value: "true", Type: ExpressionTokenBoolean},
 			{Value: "eq", Type: ExpressionTokenLogical},
 		}
-		result, err := CompareQueue(expect, output)
-		if !result {
+		if err := CompareQueue(expect, output); err != nil {
 			t.Error(err)
 		}
 	}
@@ -1750,8 +1745,7 @@ func TestFilterSubstringNestedFunction(t *testing.T) {
 			{Value: "'ci'", Type: ExpressionTokenString},
 			{Value: "eq", Type: ExpressionTokenLogical},
 		}
-		result, err := CompareQueue(expect, output)
-		if !result {
+		if err := CompareQueue(expect, output); err != nil {
 			t.Error(err)
 		}
 	}
@@ -1868,9 +1862,7 @@ func TestFilterLambdaAnyNot(t *testing.T) {
 			{Value: "any", Type: ExpressionTokenLambda},
 			{Value: "/", Type: ExpressionTokenLambdaNav},
 		}
-		var result bool
-		result, err = CompareQueue(expect, output)
-		if !result {
+		if err = CompareQueue(expect, output); err != nil {
 			t.Error(err)
 		}
 	}
