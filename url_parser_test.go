@@ -384,12 +384,46 @@ func TestUnescapeStringTokens(t *testing.T) {
 			},
 		},
 		{
-			// Invalid sort directive
-			url:                "/Books?$filter=Description eq 'abc'&$orderby=Author ascending",
-			errRegex:           regexp.MustCompile("Invalid sort directive.*"),
+			url:                "/Products?$orderby=Asc",
+			errRegex:           nil,
 			expectedFilterTree: nil,
-			expectedOrderBy:    nil,
+			expectedOrderBy: []OrderByItem{
+				{Field: &Token{Value: "Asc"}, Order: "asc"},
+			},
 		},
+		{
+			url:                "/Products?$orderby=Asc Asc",
+			errRegex:           nil,
+			expectedFilterTree: nil,
+			expectedOrderBy: []OrderByItem{
+				{Field: &Token{Value: "Asc"}, Order: "asc"},
+			},
+		},
+		{
+			url:                "/Products?$orderby=Desc Asc",
+			errRegex:           nil,
+			expectedFilterTree: nil,
+			expectedOrderBy: []OrderByItem{
+				{Field: &Token{Value: "Desc"}, Order: "asc"},
+			},
+		},
+		{
+			url:                "/Products?$orderby=Asc Desc",
+			errRegex:           nil,
+			expectedFilterTree: nil,
+			expectedOrderBy: []OrderByItem{
+				{Field: &Token{Value: "Asc"}, Order: "desc"},
+			},
+		},
+		{
+			url:                "/Products?$orderby=ProductDesc",
+			errRegex:           nil,
+			expectedFilterTree: nil,
+			expectedOrderBy: []OrderByItem{
+				{Field: &Token{Value: "ProductDesc"}, Order: "asc"},
+			},
+		},
+
 		/*
 			TODO: this is not supported yet.
 			{
@@ -431,6 +465,31 @@ func TestUnescapeStringTokens(t *testing.T) {
 				},
 			},
 		},
+		{
+			url:                "/Product?$orderby=Tags(Key='Sku Number')/Value",
+			errRegex:           nil,
+			expectedFilterTree: nil,
+			expectedOrderBy: []OrderByItem{
+				{
+					Field: &Token{Value: "Tags(Key='Sku Number')/Value"},
+					Order: "asc",
+				},
+			},
+		},
+		{
+			// Disallow $orderby=+Name
+			// Query string uses %2B which is the escape for +. The + character is itself a url escape for space, see https://www.w3schools.com/tags/ref_urlencode.asp.
+			url:                "/Product?$orderby=%2BName",
+			errRegex:           regexp.MustCompile(".*Token '\\+Name' is invalid.*"),
+			expectedFilterTree: nil,
+			expectedOrderBy:    nil,
+		},
+		{
+			url:                "/Product?$orderby=-Name",
+			errRegex:           regexp.MustCompile(".*Token '-Name' is invalid.*"),
+			expectedFilterTree: nil,
+			expectedOrderBy:    nil,
+		},
 	}
 	for _, testCase := range testCases {
 		parsedUrl, err := url.Parse(testCase.url)
@@ -449,7 +508,7 @@ func TestUnescapeStringTokens(t *testing.T) {
 			t.Errorf("Test case '%s' failed. Expected error but obtained nil error", testCase.url)
 			continue
 		} else if err != nil && !testCase.errRegex.MatchString(err.Error()) {
-			t.Errorf("Test case '%s' failed. Obtained error %v does not match expected regex %v",
+			t.Errorf("Test case '%s' failed. Obtained error [%v] does not match expected regex [%v]",
 				testCase.url, err, testCase.errRegex)
 			continue
 		}
@@ -469,7 +528,7 @@ func TestUnescapeStringTokens(t *testing.T) {
 
 			err = compareOrderBy(request.Query.OrderBy, testCase.expectedOrderBy)
 			if err != nil {
-				t.Errorf("orderby not match expected value. error: %s", err.Error())
+				t.Errorf("orderby does not match expected value. error: %s", err.Error())
 			}
 		}
 	}
