@@ -1,6 +1,7 @@
 package godata
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -14,6 +15,7 @@ func TestTokenTypes(t *testing.T) {
 }
 
 func TestExpressionDateTime(t *testing.T) {
+	ctx := context.Background()
 	tokenizer := NewExpressionTokenizer()
 	tokens := map[string]ExpressionTokenType{
 		"2011-08-29T21:58Z":             ExpressionTokenDateTime,
@@ -40,7 +42,7 @@ func TestExpressionDateTime(t *testing.T) {
 			{Value: "gt", Type: ExpressionTokenLogical},
 			{Value: tokenValue, Type: tokenType},
 		}
-		output, err := tokenizer.Tokenize(input)
+		output, err := tokenizer.Tokenize(ctx, input)
 		if err != nil {
 			t.Errorf("Failed to tokenize input %s. Error: %v", input, err)
 		}
@@ -200,11 +202,12 @@ func TestValidBooleanExpressionSyntax(t *testing.T) {
 			"Tags/any(var:var/Key eq 'Site' and var/Value eq 'New York City') or " +
 			"Tags/any(var:var/Key eq 'Site' and var/Value eq 'San Francisco')",
 	}
+	ctx := context.Background()
 	p := NewExpressionParser()
 	p.ExpectBoolExpr = true
 	for _, input := range queries {
 		t.Logf("Testing expression %s", input)
-		q, err := p.ParseExpressionString(input)
+		q, err := p.ParseExpressionString(ctx, input)
 		if err != nil {
 			t.Errorf("Error parsing query '%s'. Error: %v", input, err)
 		} else {
@@ -222,6 +225,7 @@ func TestValidBooleanExpressionSyntax(t *testing.T) {
 
 // The URLs below are not valid ODATA syntax, the parser should return an error.
 func TestInvalidBooleanExpressionSyntax(t *testing.T) {
+	ctx := context.Background()
 	queries := []string{
 		"(TRUE)",  // Should be true lowercase
 		"(City)",  // The literal City is not boolean
@@ -240,10 +244,100 @@ func TestInvalidBooleanExpressionSyntax(t *testing.T) {
 	p := NewExpressionParser()
 	p.ExpectBoolExpr = true
 	for _, input := range queries {
-		q, err := p.ParseExpressionString(input)
+		q, err := p.ParseExpressionString(ctx, input)
 		if err == nil {
 			// The parser has incorrectly determined the syntax is valid.
 			t.Errorf("The expression '%s' is not valid ODATA syntax. The ODATA parser should return an error. Tree:\n%v", input, q.Tree)
+		}
+	}
+}
+
+func TestExpressionWithLenientFlags(t *testing.T) {
+	testCases := []struct {
+		expression string
+		valid      bool // true if parsing expression should be successful.
+		cfg        OdataComplianceConfig
+		setCtx     bool
+		tree       []expectedParseNode // The expected tree.
+	}{
+		{
+			expression: "(a, b, )",
+			valid:      false,
+			setCtx:     false,
+		},
+		{
+			expression: "(a, b, )",
+			valid:      false,
+			setCtx:     true,
+		},
+		{
+			expression: "(a, b, )",
+			valid:      false,
+			setCtx:     true,
+			cfg:        ComplianceStrict,
+		},
+		{
+			expression: "(a, b, )",
+			valid:      true, // Normally this would not be valid, but the ComplianceIgnoreInvalidComma flag is set.
+			setCtx:     true,
+			cfg:        ComplianceIgnoreInvalidComma,
+		},
+		{
+			expression: "City in ('Dallas', 'Houston', )",
+			valid:      true,
+			setCtx:     true,
+			cfg:        ComplianceIgnoreInvalidComma,
+			tree: []expectedParseNode{
+				{Value: "in", Depth: 0, Type: ExpressionTokenLogical},
+				{Value: "City", Depth: 1, Type: ExpressionTokenLiteral},
+				{Value: TokenListExpr, Depth: 1, Type: TokenTypeListExpr},
+				{Value: "'Dallas'", Depth: 2, Type: ExpressionTokenString},
+				{Value: "'Houston'", Depth: 2, Type: ExpressionTokenString},
+			},
+		},
+		{
+			expression: "(a, , b)", // This is not a list.
+			valid:      false,
+		},
+		{
+			expression: "(, a, b)", // This is not a list.
+			valid:      false,
+		},
+		{
+			expression: "(,)", // A comma by itself is not an expression
+			valid:      false,
+		},
+		{
+			expression: "(,)", // A comma by itself is not an expression
+			valid:      false,
+			setCtx:     true,
+			cfg:        ComplianceIgnoreInvalidComma,
+		},
+	}
+
+	p := NewExpressionParser()
+	p.ExpectBoolExpr = false
+	for _, testCase := range testCases {
+		t.Logf("testing: %s", testCase.expression)
+		ctx := context.Background()
+		if testCase.setCtx {
+			ctx = WithOdataComplianceConfig(ctx, testCase.cfg)
+		}
+		q, err := p.ParseExpressionString(ctx, testCase.expression)
+		if testCase.valid && err != nil {
+			// The parser has incorrectly determined the syntax is invalid.
+			t.Errorf("The expression '%s' is valid ODATA syntax. Cfg: %v The ODATA parser should not have returned an error",
+				testCase.expression, testCase.cfg)
+		} else if !testCase.valid && err == nil {
+			// The parser has incorrectly determined the syntax is valid.
+			t.Errorf("The expression '%s' is not valid ODATA syntax. The ODATA parser should return an error. Tree:\n%v",
+				testCase.expression, q.Tree)
+		} else if testCase.valid && testCase.tree != nil {
+			pos := 0
+			err = CompareTree(q.Tree, testCase.tree, &pos, 0)
+			if err != nil {
+				t.Errorf("Tree representation does not match expected value. error: %v. Tree:\n%v", err, q.Tree)
+			}
 		}
 	}
 }
@@ -306,11 +400,12 @@ func TestInvalidExpressionSyntax(t *testing.T) {
 		"a b c",                        // Invalid sequence of literals.
 		"'a' 'b' 'c'",                  // Invalid sequence of strings.
 	}
+	ctx := context.Background()
 	p := NewExpressionParser()
 	p.ExpectBoolExpr = false
 	for _, input := range queries {
 		t.Logf("testing: %s", input)
-		q, err := p.ParseExpressionString(input)
+		q, err := p.ParseExpressionString(ctx, input)
 		if err == nil {
 			// The parser has incorrectly determined the syntax is valid.
 			t.Errorf("The expression '%s' is not valid ODATA syntax. The ODATA parser should return an error. Tree:\n%v", input, q.Tree)
@@ -319,10 +414,11 @@ func TestInvalidExpressionSyntax(t *testing.T) {
 }
 
 func BenchmarkExpressionTokenizer(b *testing.B) {
+	ctx := context.Background()
 	t := NewExpressionTokenizer()
 	for i := 0; i < b.N; i++ {
 		input := "Name eq 'Milk' and Price lt 2.55"
-		if _, err := t.Tokenize(input); err != nil {
+		if _, err := t.Tokenize(ctx, input); err != nil {
 			b.Fatalf("Failed to tokenize expression: %v", err)
 		}
 	}
@@ -432,11 +528,11 @@ func CompareTree(node *ParseNode, expect []expectedParseNode, pos *int, level in
 }
 
 func TestExpressions(t *testing.T) {
-
+	ctx := context.Background()
 	p := NewExpressionParser()
 	for _, testCase := range testCases {
 		t.Logf("Expression: %s", testCase.expression)
-		tokens, err := GlobalExpressionTokenizer.Tokenize(testCase.expression)
+		tokens, err := GlobalExpressionTokenizer.Tokenize(ctx, testCase.expression)
 		if err != nil {
 			t.Errorf("Failed to tokenize expression '%s'. Error: %v", testCase.expression, err)
 			continue
@@ -447,7 +543,7 @@ func TestExpressions(t *testing.T) {
 				continue
 			}
 		}
-		output, err := p.InfixToPostfix(tokens)
+		output, err := p.InfixToPostfix(ctx, tokens)
 		if err != nil {
 			t.Errorf("Failed to convert expression to postfix notation: %v", err)
 			continue
@@ -458,7 +554,7 @@ func TestExpressions(t *testing.T) {
 				continue
 			}
 		}
-		tree, err := p.PostfixToTree(output)
+		tree, err := p.PostfixToTree(ctx, output)
 		if err != nil {
 			t.Errorf("Failed to parse expression '%s'. Error: %v", testCase.expression, err)
 			continue

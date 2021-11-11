@@ -1,6 +1,7 @@
 package godata
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -8,23 +9,23 @@ import (
 
 // Parse a request from the HTTP server and format it into a GoDaataRequest type
 // to be passed to a provider to produce a result.
-func ParseRequest(path string, query url.Values, lenient bool) (*GoDataRequest, error) {
-
-	firstSegment, lastSegment, err := ParseUrlPath(path)
-	if err != nil {
-		return nil, err
-	}
-	parsedQuery, err := ParseUrlQuery(query, lenient)
-	if err != nil {
-		return nil, err
+func ParseRequest(ctx context.Context, path string, query url.Values) (*GoDataRequest, error) {
+	r := &GoDataRequest{
+		RequestKind: RequestKindUnknown,
 	}
 
-	return &GoDataRequest{firstSegment, lastSegment, parsedQuery, RequestKindUnknown}, nil
+	if err := r.ParseUrlPath(path); err != nil {
+		return nil, err
+	}
+	if err := r.ParseUrlQuery(ctx, query); err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 // Compare a request to a given service, and validate the semantics and update
 // the request with semantics included
-func SemanticizeRequest(req *GoDataRequest, service *GoDataService) error {
+func (req *GoDataRequest) SemanticizeRequest(service *GoDataService) error {
 
 	// if request kind is a resource
 	for segment := req.FirstSegment; segment != nil; segment = segment.Next {
@@ -87,14 +88,14 @@ func SemanticizeRequest(req *GoDataRequest, service *GoDataService) error {
 	return nil
 }
 
-func ParseUrlPath(path string) (*GoDataSegment, *GoDataSegment, error) {
+func (req *GoDataRequest) ParseUrlPath(path string) error {
 	parts := strings.Split(path, "/")
-	firstSegment := &GoDataSegment{
+	req.FirstSegment = &GoDataSegment{
 		RawValue:   parts[0],
 		Name:       ParseName(parts[0]),
 		Identifier: ParseIdentifiers(parts[0]),
 	}
-	currSegment := firstSegment
+	currSegment := req.FirstSegment
 	for _, v := range parts[1:] {
 		temp := &GoDataSegment{
 			RawValue:   v,
@@ -105,9 +106,9 @@ func ParseUrlPath(path string) (*GoDataSegment, *GoDataSegment, error) {
 		currSegment.Next = temp
 		currSegment = temp
 	}
-	lastSegment := currSegment
+	req.LastSegment = currSegment
 
-	return firstSegment, lastSegment, nil
+	return nil
 }
 
 func SemanticizePathSegment(segment *GoDataSegment, service *GoDataService) error {
@@ -225,18 +226,50 @@ var supportedOdataKeywords = map[string]bool{
 	"tags":         true,
 }
 
-func ParseUrlQuery(query url.Values, lenient bool) (*GoDataQuery, error) {
-	if !lenient {
-		// Validate each query parameter is a valid ODATA keyword.
-		for key, val := range query {
-			if _, ok := supportedOdataKeywords[key]; !ok {
-				return nil, BadRequestError(fmt.Sprintf("Query parameter '%s' is not supported", key)).
-					SetCause(&UnsupportedQueryParameterError{key})
-			}
-			if len(val) > 1 {
-				return nil, BadRequestError(fmt.Sprintf("Query parameter '%s' cannot be specified more than once", key)).
-					SetCause(&DuplicateQueryParameterError{key})
-			}
+type OdataComplianceConfig int
+
+const (
+	ComplianceStrict OdataComplianceConfig = 0
+	// Ignore duplicate ODATA keywords in the URL query.
+	ComplianceIgnoreDuplicateKeywords OdataComplianceConfig = 1 << iota
+	// Ignore unknown ODATA keywords in the URL query.
+	ComplianceIgnoreUnknownKeywords
+	// Ignore extraneous comma as the last character in a list of function arguments.
+	ComplianceIgnoreInvalidComma
+	ComplianceIgnoreAll OdataComplianceConfig = ComplianceIgnoreDuplicateKeywords |
+		ComplianceIgnoreUnknownKeywords |
+		ComplianceIgnoreInvalidComma
+)
+
+type parserConfigKey int
+
+const (
+	odataCompliance parserConfigKey = iota
+)
+
+// If the lenient mode is set, the 'failOnConfig' bits are used to determine the ODATA compliance.
+// This is mostly for historical reasons because the original parser had compliance issues.
+// If the lenient mode is not set, the parser returns an error.
+func WithOdataComplianceConfig(ctx context.Context, cfg OdataComplianceConfig) context.Context {
+	return context.WithValue(ctx, odataCompliance, cfg)
+}
+
+// ParseUrlQuery parses the URL query, applying optional logic specified in the context.
+func (req *GoDataRequest) ParseUrlQuery(ctx context.Context, query url.Values) error {
+	cfg, hasComplianceConfig := ctx.Value(odataCompliance).(OdataComplianceConfig)
+	if !hasComplianceConfig {
+		// Strict ODATA compliance by default.
+		cfg = ComplianceStrict
+	}
+	// Validate each query parameter is a valid ODATA keyword.
+	for key, val := range query {
+		if _, ok := supportedOdataKeywords[key]; !ok && (cfg&ComplianceIgnoreUnknownKeywords == 0) {
+			return BadRequestError(fmt.Sprintf("Query parameter '%s' is not supported", key)).
+				SetCause(&UnsupportedQueryParameterError{key})
+		}
+		if (cfg&ComplianceIgnoreDuplicateKeywords == 0) && (len(val) > 1) {
+			return BadRequestError(fmt.Sprintf("Query parameter '%s' cannot be specified more than once", key)).
+				SetCause(&DuplicateQueryParameterError{key})
 		}
 	}
 	filter := query.Get("$filter")
@@ -256,85 +289,85 @@ func ParseUrlQuery(query url.Values, lenient bool) (*GoDataQuery, error) {
 
 	var err error = nil
 	if filter != "" {
-		result.Filter, err = ParseFilterString(filter)
+		result.Filter, err = ParseFilterString(ctx, filter)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if at != "" {
-		result.At, err = ParseFilterString(at)
+		result.At, err = ParseFilterString(ctx, at)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if at != "" {
-		result.At, err = ParseFilterString(at)
+		result.At, err = ParseFilterString(ctx, at)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if apply != "" {
-		result.Apply, err = ParseApplyString(apply)
+		result.Apply, err = ParseApplyString(ctx, apply)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if expand != "" {
-		result.Expand, err = ParseExpandString(expand)
+		result.Expand, err = ParseExpandString(ctx, expand)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if sel != "" {
-		result.Select, err = ParseSelectString(sel)
+		result.Select, err = ParseSelectString(ctx, sel)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if orderby != "" {
-		result.OrderBy, err = ParseOrderByString(orderby)
+		result.OrderBy, err = ParseOrderByString(ctx, orderby)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if top != "" {
-		result.Top, err = ParseTopString(top)
+		result.Top, err = ParseTopString(ctx, top)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if skip != "" {
-		result.Skip, err = ParseSkipString(skip)
+		result.Skip, err = ParseSkipString(ctx, skip)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if count != "" {
-		result.Count, err = ParseCountString(count)
+		result.Count, err = ParseCountString(ctx, count)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if inlinecount != "" {
-		result.InlineCount, err = ParseInlineCountString(inlinecount)
+		result.InlineCount, err = ParseInlineCountString(ctx, inlinecount)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if search != "" {
-		result.Search, err = ParseSearchString(search)
+		result.Search, err = ParseSearchString(ctx, search)
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if format != "" {
 		err = NotImplementedError("Format is not supported")
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	return result, err
+	req.Query = result
+	return err
 }
 
 func ParseIdentifiers(segment string) *GoDataIdentifier {

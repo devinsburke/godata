@@ -1,6 +1,7 @@
 package godata
 
 import (
+	"context"
 	"strings"
 )
 
@@ -103,18 +104,17 @@ type ExpressionParser struct {
 // ParseExpressionString converts a ODATA expression input string into a parse
 // tree that can be used by providers to create a response.
 // Expressions can be used within $filter and $orderby query options.
-func (p *ExpressionParser) ParseExpressionString(expression string) (*GoDataExpression, error) {
-
-	tokens, err := p.tokenizer.Tokenize(expression)
+func (p *ExpressionParser) ParseExpressionString(ctx context.Context, expression string) (*GoDataExpression, error) {
+	tokens, err := p.tokenizer.Tokenize(ctx, expression)
 	if err != nil {
 		return nil, err
 	}
 	// TODO: can we do this in one fell swoop?
-	postfix, err := p.InfixToPostfix(tokens)
+	postfix, err := p.InfixToPostfix(ctx, tokens)
 	if err != nil {
 		return nil, err
 	}
-	tree, err := p.PostfixToTree(postfix)
+	tree, err := p.PostfixToTree(ctx, postfix)
 	if err != nil {
 		return nil, err
 	}

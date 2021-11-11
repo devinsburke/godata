@@ -1,21 +1,23 @@
 package godata
 
+import "context"
+
 var GlobalFilterTokenizer = NewExpressionTokenizer()
 var GlobalFilterParser = NewExpressionParser()
 
 // ParseFilterString converts an input string from the $filter part of the URL into a parse
 // tree that can be used by providers to create a response.
-func ParseFilterString(filter string) (*GoDataFilterQuery, error) {
-	tokens, err := GlobalFilterTokenizer.Tokenize(filter)
+func ParseFilterString(ctx context.Context, filter string) (*GoDataFilterQuery, error) {
+	tokens, err := GlobalFilterTokenizer.Tokenize(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
 	// TODO: can we do this in one fell swoop?
-	postfix, err := GlobalFilterParser.InfixToPostfix(tokens)
+	postfix, err := GlobalFilterParser.InfixToPostfix(ctx, tokens)
 	if err != nil {
 		return nil, err
 	}
-	tree, err := GlobalFilterParser.PostfixToTree(postfix)
+	tree, err := GlobalFilterParser.PostfixToTree(ctx, postfix)
 	if err != nil {
 		return nil, err
 	}
