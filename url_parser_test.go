@@ -520,23 +520,23 @@ func TestUnescapeStringTokens(t *testing.T) {
 		},
 		{
 			url:      "/Product?$compute=Price mul Quantity",
-			errRegex: regexp.MustCompile("Invalid \\$compute query option"),
+			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
 		},
 		{
 			url:      "/Product?$compute=Price bad Quantity as TotalPrice",
-			errRegex: regexp.MustCompile("Invalid \\$compute query option"),
+			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
 		},
 		{
 			url:      "/Product?$compute=Price mul Quantity as as TotalPrice",
-			errRegex: regexp.MustCompile("Invalid \\$compute query option"),
+			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
 		},
 		{
 			url:      "/Product?$compute=Price mul Quantity as TotalPrice as TotalPrice2",
-			errRegex: regexp.MustCompile("Invalid \\$compute query option"),
+			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
 		},
 		{
 			url:      "/Product?$compute=TotalPrice as Price mul Quantity",
-			errRegex: regexp.MustCompile("Invalid \\$compute query option"),
+			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
 		},
 	}
 
