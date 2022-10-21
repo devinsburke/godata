@@ -551,6 +551,10 @@ func TestUnescapeStringTokens(t *testing.T) {
 		Name:      "discount",
 		NumParams: []int{1},
 	}})
+	if err != nil {
+		t.Errorf("Failed to add custom function: %v", err)
+		t.FailNow()
+	}
 
 	for _, testCase := range testCases {
 		var parsedUrl *url.URL
