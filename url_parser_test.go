@@ -245,6 +245,7 @@ func TestUnescapeStringTokens(t *testing.T) {
 
 		expectedFilterTree []expectedParseNode
 		expectedOrderBy    []OrderByItem
+		expectedCompute    []ComputeItem
 	}{
 		{
 			// Unescaped single quotes.
@@ -493,7 +494,52 @@ func TestUnescapeStringTokens(t *testing.T) {
 			expectedFilterTree: nil,
 			expectedOrderBy:    nil,
 		},
+		{
+			url:      "/Product?$compute=Price mul Quantity as TotalPrice",
+			errRegex: nil,
+			expectedCompute: []ComputeItem{
+				{
+					Field: "TotalPrice",
+				},
+			},
+		},
+		{
+			url: "/Product?$compute=Price mul Quantity as TotalPrice,A add B as C",
+			expectedCompute: []ComputeItem{
+				{
+					Field: "TotalPrice",
+				},
+				{
+					Field: "C",
+				},
+			},
+		},
+		{
+			url: "/Product?$expand=Details($compute=Price mul Quantity as TotalPrice)",
+			// todo: enhance fixture to handle $expand with embedded $compute and add assertions
+		},
+		{
+			url:      "/Product?$compute=Price mul Quantity",
+			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
+		},
+		{
+			url:      "/Product?$compute=Price bad Quantity as TotalPrice",
+			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
+		},
+		{
+			url:      "/Product?$compute=Price mul Quantity as as TotalPrice",
+			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
+		},
+		{
+			url:      "/Product?$compute=Price mul Quantity as TotalPrice as TotalPrice2",
+			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
+		},
+		{
+			url:      "/Product?$compute=TotalPrice as Price mul Quantity",
+			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
+		},
 	}
+
 	for _, testCase := range testCases {
 		parsedUrl, err := url.Parse(testCase.url)
 		if err != nil {
@@ -534,6 +580,12 @@ func TestUnescapeStringTokens(t *testing.T) {
 			if err != nil {
 				t.Errorf("orderby does not match expected value. error: %s", err.Error())
 			}
+
+			err = compareCompute(request.Query.Compute, testCase.expectedCompute)
+			if err != nil {
+				t.Errorf("compute does not match expected value. error: %s", err.Error())
+			}
+			//			t.Log(request.Query.Compute.ComputeItems[0])
 		}
 	}
 }
@@ -558,6 +610,26 @@ func compareOrderBy(obtained *GoDataOrderByQuery, expected []OrderByItem) error 
 		if v.Order != obtained.OrderByItems[i].Order {
 			return fmt.Errorf("Unexpected $orderby at index %d. Got '%s', expected '%s'",
 				i, obtained.OrderByItems[i].Order, v.Order)
+		}
+	}
+	return nil
+}
+
+func compareCompute(obtained *GoDataComputeQuery, expected []ComputeItem) error {
+	if len(expected) == 0 && (obtained == nil || obtained.ComputeItems == nil) {
+		return nil
+	}
+	if len(expected) > 0 && (obtained == nil || obtained.ComputeItems == nil) {
+		return fmt.Errorf("Unexpected number of $compute fields. Got nil, expected %d",
+			len(expected))
+	}
+	if len(obtained.ComputeItems) != len(expected) {
+		return fmt.Errorf("Unexpected number of $compute fields. Got %d, expected %d",
+			len(obtained.ComputeItems), len(expected))
+	}
+	for i, v := range expected {
+		if obtained.ComputeItems[i].Field != v.Field {
+			return fmt.Errorf("Expected $compute field %d with name '%s'. Got '%s'.", i, v.Field, obtained.ComputeItems[i].Field)
 		}
 	}
 	return nil

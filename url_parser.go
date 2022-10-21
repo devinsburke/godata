@@ -221,6 +221,7 @@ var supportedOdataKeywords = map[string]bool{
 	"$count":       true,
 	"$inlinecount": true,
 	"$search":      true,
+	"$compute":     true,
 	"$format":      true,
 	"at":           true,
 	"tags":         true,
@@ -283,6 +284,7 @@ func (req *GoDataRequest) ParseUrlQuery(ctx context.Context, query url.Values) e
 	count := query.Get("$count")
 	inlinecount := query.Get("$inlinecount")
 	search := query.Get("$search")
+	compute := query.Get("$compute")
 	format := query.Get("$format")
 
 	result := &GoDataQuery{}
@@ -356,6 +358,12 @@ func (req *GoDataRequest) ParseUrlQuery(ctx context.Context, query url.Values) e
 	}
 	if search != "" {
 		result.Search, err = ParseSearchString(ctx, search)
+	}
+	if err != nil {
+		return err
+	}
+	if compute != "" {
+		result.Compute, err = ParseComputeString(ctx, compute)
 	}
 	if err != nil {
 		return err

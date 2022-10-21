@@ -79,6 +79,7 @@ type GoDataQuery struct {
 	Count       *GoDataCountQuery
 	InlineCount *GoDataInlineCountQuery
 	Search      *GoDataSearchQuery
+	Compute     *GoDataComputeQuery
 	Format      *GoDataFormatQuery
 }
 
@@ -128,6 +129,12 @@ type GoDataInlineCountQuery string
 type GoDataSearchQuery struct {
 	Tree *ParseNode
 	// The raw search string
+	RawValue string
+}
+
+type GoDataComputeQuery struct {
+	ComputeItems []*ComputeItem
+	// The raw compute string
 	RawValue string
 }
 

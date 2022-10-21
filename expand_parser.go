@@ -2,6 +2,7 @@ package godata
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 )
 
@@ -34,6 +35,7 @@ type ExpandItem struct {
 	Skip    *GoDataSkipQuery
 	Top     *GoDataTopQuery
 	Select  *GoDataSelectQuery
+	Compute *GoDataComputeQuery
 	Expand  *GoDataExpandQuery
 	Levels  int
 }
@@ -171,6 +173,22 @@ func ParseExpandOption(ctx context.Context, queue *tokenQueue, item *ExpandItem)
 	queue.Dequeue() // drop the '=' from the front of the queue
 	body := queue.GetValue()
 
+	cfg, hasComplianceConfig := ctx.Value(odataCompliance).(OdataComplianceConfig)
+	if !hasComplianceConfig {
+		// Strict ODATA compliance by default.
+		cfg = ComplianceStrict
+	}
+
+	if cfg == ComplianceStrict {
+		// Enforce that only supported keywords are specified in expand.
+		// The $levels keyword supported within expand is checked explicitly in addition to
+		// keywords listed in supportedOdataKeywords[] which are permitted within expand and
+		// at the top level of the odata query.
+		if _, ok := supportedOdataKeywords[head]; !ok && head != "$levels" {
+			return BadRequestError(fmt.Sprintf("Unsupported item '%s' in expand clause.", head))
+		}
+	}
+
 	if head == "$filter" {
 		filter, err := ParseFilterString(ctx, body)
 		if err == nil {
@@ -229,6 +247,15 @@ func ParseExpandOption(ctx context.Context, queue *tokenQueue, item *ExpandItem)
 		sel, err := ParseSelectString(ctx, body)
 		if err == nil {
 			item.Select = sel
+		} else {
+			return err
+		}
+	}
+
+	if head == "$compute" {
+		comp, err := ParseComputeString(ctx, body)
+		if err == nil {
+			item.Compute = comp
 		} else {
 			return err
 		}
