@@ -142,8 +142,21 @@ func (p *ExpressionParser) ParseExpressionString(ctx context.Context, expression
 	return &GoDataExpression{tree, expression}, nil
 }
 
-var GlobalExpressionTokenizer = NewExpressionTokenizer()
-var GlobalExpressionParser = NewExpressionParser()
+var GlobalExpressionTokenizer *Tokenizer
+var GlobalExpressionParser *ExpressionParser
+
+// init constructs single instances of Tokenizer and ExpressionParser and initializes their
+// respective packages variables.
+func init() {
+	p := NewExpressionParser()
+	t := p.tokenizer // use the Tokenizer instance created by
+
+	GlobalExpressionTokenizer = t
+	GlobalExpressionParser = p
+
+	GlobalFilterTokenizer = t
+	GlobalFilterParser = p
+}
 
 // ExpressionTokenizer creates a tokenizer capable of tokenizing ODATA expressions.
 // 4.01 Services MUST support case-insensitive operator names.
@@ -191,7 +204,10 @@ func NewExpressionTokenizer() *Tokenizer {
 	// TODO make leniency configurable.
 	// E.g. ABNF for 'indexof':
 	// indexOfMethodCallExpr    = "indexof"    OPEN BWS commonExpr BWS COMMA BWS commonExpr BWS CLOSE
-	t.Add("(?i)^(?P<token>(substringof|substring|length|indexof|exists))[\\s(]", ExpressionTokenFunc)
+	t.Add("(?i)^(?P<token>(substringof|substring|length|indexof|exists|"+
+		"contains|endswith|startswith|tolower|toupper|trim|concat|year|month|day|"+
+		"hour|minute|second|fractionalseconds|date|time|totaloffsetminutes|now|"+
+		"maxdatetime|mindatetime|totalseconds|round|floor|ceiling|isof|cast))[\\s(]", ExpressionTokenFunc)
 	// Logical operators must be followed by a space character.
 	// However, in practice user have written requests such as not(City eq 'Seattle')
 	// We are leniently allowing space characters between the operator name and the open parenthesis.
@@ -201,17 +217,6 @@ func NewExpressionTokenizer() *Tokenizer {
 	t.Add("(?i)^(?P<token>(eq|ne|gt|ge|lt|le|and|or|not|has|in))[\\s(]", ExpressionTokenLogical)
 	// Arithmetic operators must be followed by a space character.
 	t.Add("(?i)^(?P<token>(add|sub|mul|divby|div|mod))\\s", ExpressionTokenOp)
-	// According to ODATA ABNF notation, functions must be followed by a open parenthesis with no space
-	// between the function name and the open parenthesis.
-	// However, we are leniently allowing space characters between the function and the open parenthesis.
-	// TODO make leniency configurable.
-	//
-	// E.g. ABNF for 'contains':
-	// containsMethodCallExpr   = "contains"   OPEN BWS commonExpr BWS COMMA BWS commonExpr BWS CLOSE
-	t.Add("(?i)^(?P<token>(contains|endswith|startswith|tolower|toupper|"+
-		"trim|concat|year|month|day|hour|minute|second|fractionalseconds|date|"+
-		"time|totaloffsetminutes|now|maxdatetime|mindatetime|totalseconds|round|"+
-		"floor|ceiling|isof|cast))[\\s(]", ExpressionTokenFunc)
 	// anyExpr = "any" OPEN BWS [ lambdaVariableExpr BWS COLON BWS lambdaPredicateExpr ] BWS CLOSE
 	// allExpr = "all" OPEN BWS   lambdaVariableExpr BWS COLON BWS lambdaPredicateExpr   BWS CLOSE
 	t.Add("(?i)^(?P<token>(any|all))[\\s(]", ExpressionTokenLambda)
