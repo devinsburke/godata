@@ -547,13 +547,14 @@ func TestUnescapeStringTokens(t *testing.T) {
 			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
 		},
 	}
-	DefineCustomFunctions([]CustomFunctionInput{{
+	err := DefineCustomFunctions([]CustomFunctionInput{{
 		Name:      "discount",
 		NumParams: []int{1},
 	}})
 
 	for _, testCase := range testCases {
-		parsedUrl, err := url.Parse(testCase.url)
+		var parsedUrl *url.URL
+		parsedUrl, err = url.Parse(testCase.url)
 		if err != nil {
 			t.Errorf("Test case '%s' failed: %v", testCase.url, err)
 			continue
@@ -562,7 +563,8 @@ func TestUnescapeStringTokens(t *testing.T) {
 
 		urlQuery := parsedUrl.Query()
 		ctx := context.Background()
-		request, err := ParseRequest(ctx, parsedUrl.Path, urlQuery)
+		var request *GoDataRequest
+		request, err = ParseRequest(ctx, parsedUrl.Path, urlQuery)
 		if testCase.errRegex == nil && err != nil {
 			t.Errorf("Test case '%s' failed: %v", testCase.url, err)
 			continue
