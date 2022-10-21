@@ -2,8 +2,8 @@ package godata
 
 import "context"
 
-var GlobalFilterTokenizer = NewExpressionTokenizer()
-var GlobalFilterParser = NewExpressionParser()
+var GlobalFilterTokenizer *Tokenizer
+var GlobalFilterParser *ExpressionParser
 
 // ParseFilterString converts an input string from the $filter part of the URL into a parse
 // tree that can be used by providers to create a response.

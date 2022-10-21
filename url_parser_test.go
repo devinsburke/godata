@@ -519,6 +519,14 @@ func TestUnescapeStringTokens(t *testing.T) {
 			// todo: enhance fixture to handle $expand with embedded $compute and add assertions
 		},
 		{
+			url: "/Product?$compute=discount(Item/Price) as SalePrice",
+			expectedCompute: []ComputeItem{
+				{
+					Field: "SalePrice",
+				},
+			},
+		},
+		{
 			url:      "/Product?$compute=Price mul Quantity",
 			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
 		},
@@ -539,6 +547,10 @@ func TestUnescapeStringTokens(t *testing.T) {
 			errRegex: regexp.MustCompile(`Invalid \$compute query option`),
 		},
 	}
+	DefineCustomFunctions([]CustomFunctionInput{{
+		Name:      "discount",
+		NumParams: []int{1},
+	}})
 
 	for _, testCase := range testCases {
 		parsedUrl, err := url.Parse(testCase.url)

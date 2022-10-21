@@ -82,15 +82,19 @@ func (t *Tokenizer) Add(pattern string, token TokenType) {
 }
 
 func (t *Tokenizer) AddWithSubstituteFunc(pattern string, token TokenType, subst func(string) string) {
+	matcher := createTokenMatcher(pattern, token, subst)
+	t.TokenMatchers = append(t.TokenMatchers, matcher)
+}
+
+func createTokenMatcher(pattern string, token TokenType, subst func(string) string) *TokenMatcher {
 	rxp := regexp.MustCompile(pattern)
-	matcher := &TokenMatcher{
+	return &TokenMatcher{
 		Pattern:         pattern,
 		Re:              rxp,
 		Token:           token,
 		CaseInsensitive: strings.Contains(pattern, "(?i)"),
 		Subst:           subst,
 	}
-	t.TokenMatchers = append(t.TokenMatchers, matcher)
 }
 
 func (t *Tokenizer) Ignore(pattern string, token TokenType) {
@@ -296,6 +300,58 @@ func (p *Parser) DefineFunction(token string, params []int) *Function {
 	return f
 }
 
+// CustomFunctionInput serves as input to function DefineCustomFunctions()
+type CustomFunctionInput struct {
+	Name      string // case-insensitive function name
+	NumParams []int  // number of allowed parameters
+}
+
+// DefineCustomFunctions introduces additional function names to be considered as legal function
+// names while parsing. The function names must be different from all canonical functions and
+// operators defined in the odata specification.
+//
+// See https://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part1-protocol.html#sec_Functions
+func DefineCustomFunctions(functions []CustomFunctionInput) error {
+	var funcNames []string
+	for _, v := range functions {
+		name := strings.ToLower(v.Name)
+
+		if GlobalExpressionParser.Functions[name] != nil {
+			return fmt.Errorf("custom function '%s' may not override odata canonical function", name)
+		} else if GlobalExpressionParser.Operators[name] != nil {
+			return fmt.Errorf("custom function '%s' may not override odata operator", name)
+		}
+
+		GlobalExpressionParser.DefineFunction(name, v.NumParams)
+		funcNames = append(funcNames, name)
+	}
+
+	// create a regex that performs a case-insensitive match of any one of the provided function names
+	pattern := fmt.Sprintf("(?i)^(?P<token>(%s))[\\s(]", strings.Join(funcNames, "|"))
+	matcher := createTokenMatcher(pattern, ExpressionTokenFunc, func(in string) string { return in })
+
+	// The tokenizer has a list of matcher expressions which are evaluated in order while parsing
+	// with the first matching rule being applied. The matcher for custom functions is inserted
+	// immediately following the matcher for functions defined in the Odata specification (identified
+	// by finding rule with type ExpressionTokenFunc). Because the rules are applied in order based
+	// on specificity, inserting at this location ensures the custom function rule has similar
+	// precedence as functioned defined the Odata specification.
+	list := GlobalExpressionTokenizer.TokenMatchers
+	for i, v := range GlobalExpressionTokenizer.TokenMatchers {
+		if v.Token == ExpressionTokenFunc {
+			list = append(list[:i+1], list[i:]...)
+			list[i] = matcher
+			GlobalExpressionTokenizer.TokenMatchers = list
+			return nil
+		}
+	}
+
+	// This is a godata package bug. The tokenizer should define matches for the token
+	// type ExpressionTokenFunc for functions defined in the Odata specification.
+	// Such as substring and tolower.
+	return errors.New("godata parser is missing function matchers")
+}
+
 func (p *Parser) isFunction(token *Token) bool {
 	_, ok := p.Functions[token.Value]
 	return ok
@@ -314,7 +370,6 @@ func (p *Parser) isOperator(token *Token) bool {
 // Infix notation for variadic functions and operators: f ( a, b, c, d )
 // Postfix notation with wall notation:                 | a b c d f
 // Postfix notation with count notation:                a b c d 4 f
-//
 func (p *Parser) InfixToPostfix(ctx context.Context, tokens []*Token) (*tokenQueue, error) {
 	queue := tokenQueue{} // output queue in postfix
 	stack := tokenStack{} // Operator stack
