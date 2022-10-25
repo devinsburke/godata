@@ -207,6 +207,8 @@ func (o *GoDataQuery) GetInlineCount() *GoDataInlineCountQuery { return o.Inline
 func (o *GoDataQuery) GetSearch() *GoDataSearchQuery           { return o.Search }
 func (o *GoDataQuery) GetCompute() *GoDataComputeQuery         { return o.Compute }
 func (o *GoDataQuery) GetFormat() *GoDataFormatQuery           { return o.Format }
+
+// AddExpandItem adds an expand clause to the toplevel odata request structure 'o'.
 func (o *GoDataQuery) AddExpandItem(item *ExpandItem) {
 	if o.Expand == nil {
 		o.Expand = &GoDataExpandQuery{}
@@ -228,6 +230,9 @@ func (o *ExpandItem) GetInlineCount() *GoDataInlineCountQuery { return nil }
 func (o *ExpandItem) GetSearch() *GoDataSearchQuery           { return o.Search }
 func (o *ExpandItem) GetCompute() *GoDataComputeQuery         { return o.Compute }
 func (o *ExpandItem) GetFormat() *GoDataFormatQuery           { return nil }
+
+// AddExpandItem adds an expand clause to 'o' creating a nested expand, ie $expand 'item'
+// nested within $expand 'o'.
 func (o *ExpandItem) AddExpandItem(item *ExpandItem) {
 	if o.Expand == nil {
 		o.Expand = &GoDataExpandQuery{}
