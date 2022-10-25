@@ -170,7 +170,6 @@ func (id *GoDataIdentifier) GetKey(key string) (string, bool) {
 // such as a provider implementation which starts at the GoDataQuery and walks any nested ExpandItem
 // in an identical manner.
 type GoDataCommonStructure interface {
-	GetPath() string
 	GetFilter() *GoDataFilterQuery
 	GetAt() *GoDataFilterQuery
 	GetApply() *GoDataApplyQuery
@@ -184,11 +183,17 @@ type GoDataCommonStructure interface {
 	GetSearch() *GoDataSearchQuery
 	GetCompute() *GoDataComputeQuery
 	GetFormat() *GoDataFormatQuery
+	// AddExpandItem adds an item to the list of expand clauses in the underlying GoDataQuery/ExpandItem
+	// structure.
+	// AddExpandItem may be used to add items based on the requirements of the application using godata.
+	// For example applications may support the introduction of dynamic navigational fields using $compute.
+	// A possible implementation is to parse the request url using godata and then during semantic
+	// post-processing identify dynamic navigation properties and call AddExpandItem to add them to the
+	// list of expanded fields.
 	AddExpandItem(*ExpandItem)
 }
 
 // GoDataQuery implementation of GoDataCommonStructure interface
-func (o *GoDataQuery) GetPath() string                         { return "" }
 func (o *GoDataQuery) GetFilter() *GoDataFilterQuery           { return o.Filter }
 func (o *GoDataQuery) GetAt() *GoDataFilterQuery               { return o.At }
 func (o *GoDataQuery) GetApply() *GoDataApplyQuery             { return o.Apply }
@@ -210,7 +215,6 @@ func (o *GoDataQuery) AddExpandItem(item *ExpandItem) {
 }
 
 // ExpandItem implementation of GoDataCommonStructure interface
-func (o *ExpandItem) GetPath() string                         { return o.Path[0].Value }
 func (o *ExpandItem) GetFilter() *GoDataFilterQuery           { return o.Filter }
 func (o *ExpandItem) GetAt() *GoDataFilterQuery               { return o.At }
 func (o *ExpandItem) GetApply() *GoDataApplyQuery             { return nil }
