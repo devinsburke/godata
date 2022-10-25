@@ -164,3 +164,69 @@ func (id *GoDataIdentifier) GetKey(key string) (string, bool) {
 	v, ok := map[string]string(*id)[key]
 	return v, ok
 }
+
+// GoDataCommonStructure represents either a GoDataQuery or ExpandItem in a uniform manner
+// as a Go interface. This allows the writing of functional logic that can work on either type,
+// such as a provider implementation which starts at the GoDataQuery and walks any nested ExpandItem
+// in an identical manner.
+type GoDataCommonStructure interface {
+	GetPath() string
+	GetFilter() *GoDataFilterQuery
+	GetAt() *GoDataFilterQuery
+	GetApply() *GoDataApplyQuery
+	GetExpand() *GoDataExpandQuery
+	GetSelect() *GoDataSelectQuery
+	GetOrderBy() *GoDataOrderByQuery
+	GetTop() *GoDataTopQuery
+	GetSkip() *GoDataSkipQuery
+	GetCount() *GoDataCountQuery
+	GetInlineCount() *GoDataInlineCountQuery
+	GetSearch() *GoDataSearchQuery
+	GetCompute() *GoDataComputeQuery
+	GetFormat() *GoDataFormatQuery
+	AddExpandItem(*ExpandItem)
+}
+
+// GoDataQuery implementation of GoDataCommonStructure interface
+func (o *GoDataQuery) GetPath() string                         { return "" }
+func (o *GoDataQuery) GetFilter() *GoDataFilterQuery           { return o.Filter }
+func (o *GoDataQuery) GetAt() *GoDataFilterQuery               { return o.At }
+func (o *GoDataQuery) GetApply() *GoDataApplyQuery             { return o.Apply }
+func (o *GoDataQuery) GetExpand() *GoDataExpandQuery           { return o.Expand }
+func (o *GoDataQuery) GetSelect() *GoDataSelectQuery           { return o.Select }
+func (o *GoDataQuery) GetOrderBy() *GoDataOrderByQuery         { return o.OrderBy }
+func (o *GoDataQuery) GetTop() *GoDataTopQuery                 { return o.Top }
+func (o *GoDataQuery) GetSkip() *GoDataSkipQuery               { return o.Skip }
+func (o *GoDataQuery) GetCount() *GoDataCountQuery             { return o.Count }
+func (o *GoDataQuery) GetInlineCount() *GoDataInlineCountQuery { return o.InlineCount }
+func (o *GoDataQuery) GetSearch() *GoDataSearchQuery           { return o.Search }
+func (o *GoDataQuery) GetCompute() *GoDataComputeQuery         { return o.Compute }
+func (o *GoDataQuery) GetFormat() *GoDataFormatQuery           { return o.Format }
+func (o *GoDataQuery) AddExpandItem(item *ExpandItem) {
+	if o.Expand == nil {
+		o.Expand = &GoDataExpandQuery{}
+	}
+	o.Expand.ExpandItems = append(o.Expand.ExpandItems, item)
+}
+
+// ExpandItem implementation of GoDataCommonStructure interface
+func (o *ExpandItem) GetPath() string                         { return o.Path[0].Value }
+func (o *ExpandItem) GetFilter() *GoDataFilterQuery           { return o.Filter }
+func (o *ExpandItem) GetAt() *GoDataFilterQuery               { return o.At }
+func (o *ExpandItem) GetApply() *GoDataApplyQuery             { return nil }
+func (o *ExpandItem) GetExpand() *GoDataExpandQuery           { return o.Expand }
+func (o *ExpandItem) GetSelect() *GoDataSelectQuery           { return o.Select }
+func (o *ExpandItem) GetOrderBy() *GoDataOrderByQuery         { return o.OrderBy }
+func (o *ExpandItem) GetTop() *GoDataTopQuery                 { return o.Top }
+func (o *ExpandItem) GetSkip() *GoDataSkipQuery               { return o.Skip }
+func (o *ExpandItem) GetCount() *GoDataCountQuery             { return nil }
+func (o *ExpandItem) GetInlineCount() *GoDataInlineCountQuery { return nil }
+func (o *ExpandItem) GetSearch() *GoDataSearchQuery           { return o.Search }
+func (o *ExpandItem) GetCompute() *GoDataComputeQuery         { return o.Compute }
+func (o *ExpandItem) GetFormat() *GoDataFormatQuery           { return nil }
+func (o *ExpandItem) AddExpandItem(item *ExpandItem) {
+	if o.Expand == nil {
+		o.Expand = &GoDataExpandQuery{}
+	}
+	o.Expand.ExpandItems = append(o.Expand.ExpandItems, item)
+}
