@@ -162,6 +162,16 @@ func ParseExpandItem(ctx context.Context, input tokenQueue) (*ExpandItem, error)
 		item.Path = append(item.Path, queue.Dequeue())
 	}
 
+	cfg, hasComplianceConfig := ctx.Value(odataCompliance).(OdataComplianceConfig)
+	if !hasComplianceConfig {
+		// Strict ODATA compliance by default.
+		cfg = ComplianceStrict
+	}
+
+	if len(item.Path) == 0 && cfg&ComplianceIgnoreInvalidComma == 0 {
+		return nil, BadRequestError("Extra comma in $expand.")
+	}
+
 	return item, nil
 }
 

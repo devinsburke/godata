@@ -31,6 +31,17 @@ func (p *ExpressionParser) ParseOrderByString(ctx context.Context, orderby strin
 
 	for _, v := range items {
 		v = strings.TrimSpace(v)
+
+		cfg, hasComplianceConfig := ctx.Value(odataCompliance).(OdataComplianceConfig)
+		if !hasComplianceConfig {
+			// Strict ODATA compliance by default.
+			cfg = ComplianceStrict
+		}
+
+		if len(v) == 0 && cfg&ComplianceIgnoreInvalidComma == 0 {
+			return nil, BadRequestError("Extra comma in $orderby.")
+		}
+
 		var order string
 		vLower := strings.ToLower(v)
 		if strings.HasSuffix(vLower, " "+ASC) {

@@ -121,3 +121,18 @@ func TestExpandNestedParens(t *testing.T) {
 		return
 	}
 }
+
+func TestExpandNegativeCases(t *testing.T) {
+	input := "Products," // Extraneous comma
+	ctx := context.Background()
+	output, err := ParseExpandString(ctx, input)
+
+	if err == nil {
+		t.Error("Expected parsing to return error.")
+		return
+	}
+	if output != nil {
+		t.Error("Expected parsing to return nil output.")
+		return
+	}
+}
