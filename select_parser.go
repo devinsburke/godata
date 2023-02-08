@@ -16,6 +16,17 @@ func ParseSelectString(ctx context.Context, sel string) (*GoDataSelectQuery, err
 	result := []*SelectItem{}
 
 	for _, item := range items {
+
+		cfg, hasComplianceConfig := ctx.Value(odataCompliance).(OdataComplianceConfig)
+		if !hasComplianceConfig {
+			// Strict ODATA compliance by default.
+			cfg = ComplianceStrict
+		}
+
+		if len(strings.TrimSpace(item)) == 0 && cfg&ComplianceIgnoreInvalidComma == 0 {
+			return nil, BadRequestError("Extra comma in $select.")
+		}
+
 		segments := []*Token{}
 		for _, val := range strings.Split(item, "/") {
 			segments = append(segments, &Token{Value: val})
