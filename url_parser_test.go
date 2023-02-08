@@ -501,7 +501,31 @@ func TestUnescapeStringTokens(t *testing.T) {
 			expectedOrderBy:    nil,
 		},
 		{
+			url:                "/Product?$orderby=Name,,Count",
+			errRegex:           regexp.MustCompile(`Extra comma in \$orderby\.`),
+			expectedFilterTree: nil,
+			expectedOrderBy:    nil,
+		},
+		{
+			url:                "/Product?$orderby=,Name",
+			errRegex:           regexp.MustCompile(`Extra comma in \$orderby\.`),
+			expectedFilterTree: nil,
+			expectedOrderBy:    nil,
+		},
+		{
 			url:                "/Product?$select=Name,",
+			errRegex:           regexp.MustCompile(`Extra comma in \$select\.`),
+			expectedFilterTree: nil,
+			expectedOrderBy:    nil,
+		},
+		{
+			url:                "/Product?$select=Name,,Count",
+			errRegex:           regexp.MustCompile(`Extra comma in \$select\.`),
+			expectedFilterTree: nil,
+			expectedOrderBy:    nil,
+		},
+		{
+			url:                "/Product?$select=,Name",
 			errRegex:           regexp.MustCompile(`Extra comma in \$select\.`),
 			expectedFilterTree: nil,
 			expectedOrderBy:    nil,
