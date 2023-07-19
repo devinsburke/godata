@@ -7,11 +7,16 @@ import (
 )
 
 func TestParseCompute(t *testing.T) {
-	DefineCustomFunctions([]CustomFunctionInput{
+	err := DefineCustomFunctions([]CustomFunctionInput{
 		{Name: "zeroArgFunc", NumParams: []int{0}},
 		{Name: "oneArgFunc", NumParams: []int{1}},
 		{Name: "twoArgFunc", NumParams: []int{2}},
 	})
+
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 
 	type testcase struct {
 		computeStrings []string
@@ -39,7 +44,8 @@ func TestParseCompute(t *testing.T) {
 
 	for i, v := range testCases {
 
-		result, err := ParseComputeString(context.Background(), strings.Join(v.computeStrings, ","))
+		var result *GoDataComputeQuery
+		result, err = ParseComputeString(context.Background(), strings.Join(v.computeStrings, ","))
 		if v.shouldPass {
 			if err != nil {
 				t.Errorf("testcase %d: %v", i, err)
