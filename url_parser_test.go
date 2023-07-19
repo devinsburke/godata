@@ -540,6 +540,15 @@ func TestUnescapeStringTokens(t *testing.T) {
 			},
 		},
 		{
+			url:      "/Product?$compute=Price mul Quantity as Extra/TotalPrice",
+			errRegex: nil,
+			expectedCompute: []ComputeItem{
+				{
+					Field: "Extra/TotalPrice",
+				},
+			},
+		},
+		{
 			url: "/Product?$compute=Price mul Quantity as TotalPrice,A add B as C",
 			expectedCompute: []ComputeItem{
 				{

@@ -10,8 +10,8 @@ import (
 // See https://docs.oasis-open.org/odata/odata/v4.01/os/part2-url-conventions/odata-v4.01-os-part2-url-conventions.html#sec_SystemQueryOptioncompute
 const computeAsSeparator = " as "
 
-// Dynamic property names are restricted to case-insensitive a-z
-var computeFieldRegex = regexp.MustCompile("^[a-zA-Z]+$")
+// Dynamic property names are restricted to case-insensitive a-z and the path separator /.
+var computeFieldRegex = regexp.MustCompile("^[a-zA-Z/]+$")
 
 type ComputeItem struct {
 	Tree  *ParseNode // The compute expression parsed as a tree.
