@@ -46,14 +46,14 @@ func ParseComputeString(ctx context.Context, compute string) (*GoDataComputeQuer
 		if len(parts) != 2 {
 			return nil, &GoDataError{
 				ResponseCode: 400,
-				Message:      "Invalid $compute query format",
+				Message:      "Invalid $compute query option",
 			}
 		}
 		field := strings.TrimSpace(parts[1])
 		if !computeFieldRegex.MatchString(field) {
 			return nil, &GoDataError{
 				ResponseCode: 400,
-				Message:      "Invalid $compute field name",
+				Message:      "Invalid $compute query option",
 			}
 		}
 
@@ -83,7 +83,7 @@ func ParseComputeString(ctx context.Context, compute string) (*GoDataComputeQuer
 			if _, ok := fields[field]; ok {
 				return nil, &GoDataError{
 					ResponseCode: 400,
-					Message:      "Invalid $compute, duplicate field name",
+					Message:      "Invalid $compute query option",
 				}
 			}
 
