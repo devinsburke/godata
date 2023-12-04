@@ -233,6 +233,7 @@ func (o *Operator) WithListExprPreference(v bool) *Operator {
 type Function struct {
 	Token  string // The function token
 	Params []int  // The number of parameters this function accepts
+	ReturnsBool bool // Indicates if the function has a boolean return value
 }
 
 type ParseNode struct {
@@ -291,11 +292,12 @@ func (p *Parser) DefineOperator(token string, operands, assoc, precedence int) *
 	return op
 }
 
-// DefineFunction adds a function to the language
-// params is the number of parameters this function accepts
-func (p *Parser) DefineFunction(token string, params []int) *Function {
+// DefineFunction adds a function to the language.
+// - params is the number of parameters this function accepts
+// - returnsBool indicates if the function has a boolean return value
+func (p *Parser) DefineFunction(token string, params []int, returnsBool bool) *Function {
 	sort.Sort(sort.Reverse(sort.IntSlice(params)))
-	f := &Function{token, params}
+	f := &Function{token, params, returnsBool}
 	p.Functions[token] = f
 	return f
 }
@@ -304,6 +306,7 @@ func (p *Parser) DefineFunction(token string, params []int) *Function {
 type CustomFunctionInput struct {
 	Name      string // case-insensitive function name
 	NumParams []int  // number of allowed parameters
+	ReturnsBool bool // indicates if the function has a boolean return value
 }
 
 // DefineCustomFunctions introduces additional function names to be considered as legal function
@@ -322,7 +325,7 @@ func DefineCustomFunctions(functions []CustomFunctionInput) error {
 			return fmt.Errorf("custom function '%s' may not override odata operator", name)
 		}
 
-		GlobalExpressionParser.DefineFunction(name, v.NumParams)
+		GlobalExpressionParser.DefineFunction(name, v.NumParams, v.ReturnsBool)
 		funcNames = append(funcNames, name)
 	}
 
@@ -360,6 +363,29 @@ func (p *Parser) isFunction(token *Token) bool {
 func (p *Parser) isOperator(token *Token) bool {
 	_, ok := p.Operators[token.Value]
 	return ok
+}
+
+// isBooleanExpression returns True when the expression token 't' has a resulting boolean value
+func (p *Parser) isBooleanExpression(t *Token) bool {
+	switch t.Type {
+	case ExpressionTokenBoolean:
+		// Valid boolean expression
+	case ExpressionTokenLogical:
+		// eq|ne|gt|ge|lt|le|and|or|not|has|in
+		// Valid boolean expression
+	case ExpressionTokenFunc:
+		// Depends on function return type
+		f := p.Functions[t.Value]
+		if !f.ReturnsBool {
+			return false
+		}
+	case ExpressionTokenLambdaNav:
+		// Lambda Navigation.
+		// Valid boolean expression
+	default:
+		return false
+	}
+	return true
 }
 
 // InfixToPostfix parses the input string of tokens using the given definitions of operators

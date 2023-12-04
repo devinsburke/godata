@@ -123,18 +123,15 @@ func TestValidBooleanExpressionSyntax(t *testing.T) {
 		"ceiling(Freight) eq 33",
 		"Rating mod 5 eq 0",
 		"Price div 2 eq 3",
-		// Type functions
+		// Functions
+		"contains(Name,'Ted')",
+		"startswith(Name,'Ted')",
+		"endswith(Name,'Lasso')",
 		"isof(ShipCountry,Edm.String)",
 		"isof(NorthwindModel.BigOrder)",
-		"cast(ShipCountry,Edm.String)",
 		// Parameter aliases
 		// See http://docs.oasis-open.org/odata/odata/v4.0/errata03/os/complete/part1-protocol/odata-v4.0-errata03-os-part1-protocol-complete.html#_Toc453752288
 		"Region eq @p1", // Aliases start with @
-		// Geo functions
-		"geo.distance(CurrentPosition,TargetPosition)",
-		"geo.length(DirectRoute)",
-		"geo.intersects(Position,TargetArea)",
-		"GEO.INTERSECTS(Position,TargetArea)", // functions are case insensitive in ODATA 4.0.1
 		// Logical operators
 		"'Milk' eq 'Milk'",  // Compare two literals
 		"'Water' ne 'Milk'", // Compare two literals
@@ -240,6 +237,15 @@ func TestInvalidBooleanExpressionSyntax(t *testing.T) {
 		"City",    // Just a single literal
 		"Tags/any(var:var/Key eq 'Site') orTags/any(var:var/Key eq 'Site')",
 		"contains(Name, 'a', 'b', 'c', 'd')", // Too many function arguments
+		"cast(ShipCountry,Edm.String)",
+		// Geo functions
+		"geo.distance(CurrentPosition,TargetPosition)",
+		"geo.length(DirectRoute)",
+		"geo.intersects(Position,TargetArea)",
+		"GEO.INTERSECTS(Position,TargetArea)", // functions are case insensitive in ODATA 4.0.1
+		"now()",
+		"tolower(Name)",
+		"concat(First,Last)",
 	}
 	p := NewExpressionParser()
 	p.ExpectBoolExpr = true

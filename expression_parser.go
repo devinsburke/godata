@@ -121,23 +121,8 @@ func (p *ExpressionParser) ParseExpressionString(ctx context.Context, expression
 	if tree == nil || tree.Token == nil {
 		return nil, BadRequestError("Expression cannot be nil")
 	}
-	if p.ExpectBoolExpr {
-		switch tree.Token.Type {
-		case ExpressionTokenBoolean:
-			// Valid boolean expression
-		case ExpressionTokenLogical:
-			// eq|ne|gt|ge|lt|le|and|or|not|has|in
-			// Valid boolean expression
-		case ExpressionTokenFunc:
-			// We need to know the return type of the function.
-			// TODO
-		case ExpressionTokenLambdaNav:
-			// Lambda Navigation.
-			// Valid boolean expression
-		default:
-			// Not a boolean expression
-			return nil, BadRequestError("Expression does not return a boolean value")
-		}
+	if p.ExpectBoolExpr && !p.isBooleanExpression(tree.Token) {
+		return nil, BadRequestError("Expression does not return a boolean value")
 	}
 	return &GoDataExpression{tree, expression}, nil
 }
@@ -288,52 +273,55 @@ func NewExpressionParser() *ExpressionParser {
 	parser.DefineOperator("and", 2, OpAssociationLeft, 2)
 	parser.DefineOperator("or", 2, OpAssociationLeft, 1)
 	parser.DefineOperator("=", 2, OpAssociationRight, 0) // Function argument assignment. E.g. MyFunc(Arg1='abc')
-	parser.DefineFunction("contains", []int{2})
-	parser.DefineFunction("endswith", []int{2})
-	parser.DefineFunction("startswith", []int{2})
-	parser.DefineFunction("exists", []int{2})
-	parser.DefineFunction("length", []int{1})
-	parser.DefineFunction("indexof", []int{2})
-	parser.DefineFunction("substring", []int{2, 3})
-	parser.DefineFunction("substringof", []int{2})
-	parser.DefineFunction("tolower", []int{1})
-	parser.DefineFunction("toupper", []int{1})
-	parser.DefineFunction("trim", []int{1})
-	parser.DefineFunction("concat", []int{2})
-	parser.DefineFunction("year", []int{1})
-	parser.DefineFunction("month", []int{1})
-	parser.DefineFunction("day", []int{1})
-	parser.DefineFunction("hour", []int{1})
-	parser.DefineFunction("minute", []int{1})
-	parser.DefineFunction("second", []int{1})
-	parser.DefineFunction("fractionalseconds", []int{1})
-	parser.DefineFunction("date", []int{1})
-	parser.DefineFunction("time", []int{1})
-	parser.DefineFunction("totaloffsetminutes", []int{1})
-	parser.DefineFunction("now", []int{0})
-	parser.DefineFunction("maxdatetime", []int{0})
-	parser.DefineFunction("mindatetime", []int{0})
-	parser.DefineFunction("totalseconds", []int{1})
-	parser.DefineFunction("round", []int{1})
-	parser.DefineFunction("floor", []int{1})
-	parser.DefineFunction("ceiling", []int{1})
-	parser.DefineFunction("isof", []int{1, 2}) // isof function can take one or two arguments.
-	parser.DefineFunction("cast", []int{2})
-	parser.DefineFunction("geo.distance", []int{2})
+	parser.DefineFunction("contains", []int{2}, true)
+	parser.DefineFunction("endswith", []int{2}, true)
+	parser.DefineFunction("startswith", []int{2}, true)
+	parser.DefineFunction("exists", []int{2}, true)
+	parser.DefineFunction("length", []int{1}, false)
+	parser.DefineFunction("indexof", []int{2}, false)
+	parser.DefineFunction("substring", []int{2, 3}, false)
+	parser.DefineFunction("substringof", []int{2}, false)
+	parser.DefineFunction("tolower", []int{1}, false)
+	parser.DefineFunction("toupper", []int{1}, false)
+	parser.DefineFunction("trim", []int{1}, false)
+	parser.DefineFunction("concat", []int{2}, false)
+	parser.DefineFunction("year", []int{1}, false)
+	parser.DefineFunction("month", []int{1}, false)
+	parser.DefineFunction("day", []int{1}, false)
+	parser.DefineFunction("hour", []int{1}, false)
+	parser.DefineFunction("minute", []int{1}, false)
+	parser.DefineFunction("second", []int{1}, false)
+	parser.DefineFunction("fractionalseconds", []int{1}, false)
+	parser.DefineFunction("date", []int{1}, false)
+	parser.DefineFunction("time", []int{1}, false)
+	parser.DefineFunction("totaloffsetminutes", []int{1}, false)
+	parser.DefineFunction("now", []int{0}, false)
+	parser.DefineFunction("maxdatetime", []int{0}, false)
+	parser.DefineFunction("mindatetime", []int{0}, false)
+	parser.DefineFunction("totalseconds", []int{1}, false)
+	parser.DefineFunction("round", []int{1}, false)
+	parser.DefineFunction("floor", []int{1}, false)
+	parser.DefineFunction("ceiling", []int{1}, false)
+	parser.DefineFunction("isof", []int{1, 2}, true) // isof function can take one or two arguments.
+	parser.DefineFunction("cast", []int{2}, false)
+	parser.DefineFunction("geo.distance", []int{2}, false)
 	// The geo.intersects function has the following signatures:
 	//   Edm.Boolean geo.intersects(Edm.GeographyPoint,Edm.GeographyPolygon)
 	//   Edm.Boolean geo.intersects(Edm.GeometryPoint,Edm.GeometryPolygon)
 	// The geo.intersects function returns true if the specified point lies within the interior
 	// or on the boundary of the specified polygon, otherwise it returns false.
-	parser.DefineFunction("geo.intersects", []int{2})
+	parser.DefineFunction("geo.intersects", []int{2}, false)
 	// The geo.length function has the following signatures:
 	//   Edm.Double geo.length(Edm.GeographyLineString)
 	//   Edm.Double geo.length(Edm.GeometryLineString)
 	// The geo.length function returns the total length of its line string parameter
 	// in the coordinate reference system signified by its SRID.
-	parser.DefineFunction("geo.length", []int{1})
-	parser.DefineFunction("any", []int{0, 2}) // 'any' can take either zero or one argument.
-	parser.DefineFunction("all", []int{2})
+	parser.DefineFunction("geo.length", []int{1}, false)
+	// 'any' can take either zero or two arguments with the later having the form any(d:d/Prop eq 1).
+	// Godata interprets the colon as an argument delimiter and considers the function to have two arguments.
+	parser.DefineFunction("any", []int{0, 2}, true)
+	// 'all' requires two arguments of a form similar to 'any'.
+	parser.DefineFunction("all", []int{2}, true)
 
 	return parser
 }
