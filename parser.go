@@ -679,12 +679,31 @@ func (p *Parser) PostfixToTree(ctx context.Context, queue *tokenQueue) (*ParseNo
 				return nil, fmt.Errorf("expected list expression token, got '%v'", n.Token.Type)
 			}
 
-			// Get function parameters.
-			// Some functions, e.g. substring, can take a variable number of arguments.
-			for _, c := range n.Children {
-				c.Parent = node
+			if node.Token.Type == ExpressionTokenCase {
+				// Create argument pairs for case() statement by translating flat list into pairs
+				if len(n.Children)%2 != 0 {
+					return nil, fmt.Errorf("expected even number of comma-separated arguments to case statement")
+				}
+				for i:=0; i<len(n.Children); i+=2 {
+					if !p.isBooleanExpression(n.Children[i].Token) {
+						return nil, fmt.Errorf("expected boolean expression in case statement")
+					}
+					c := &ParseNode{
+						Token:    &Token{Type: ExpressionTokenCasePair},
+						Parent:   node,
+						Children: []*ParseNode{n.Children[i],n.Children[i+1]},
+					}
+					node.Children = append(node.Children, c)
+				}
+			} else {
+				// Collapse function arguments as direct children of function node
+				for _, c := range n.Children {
+					c.Parent = node
+				}
+				node.Children = n.Children
 			}
-			node.Children = n.Children
+
+			// Some functions, e.g. substring, can take a variable number of arguments. Enforce legal number of arguments
 			foundMatch := false
 			f := p.Functions[node.Token.Value]
 			for _, expectedArgCount := range f.Params {
