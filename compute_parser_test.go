@@ -38,6 +38,8 @@ func TestParseCompute(t *testing.T) {
 		{[]string{"case(prop eq 'one':1,prop eq 'two':2) as newField"}, true},
 		{[]string{"case(tolower(one) eq one:'lower') as newField"}, true},
 		{[]string{"case(contains(haystack,'needle'):1,true:1) as newField"}, true},
+		{[]string{"case(tolower(one) eq one:tolower(one)) as newField"}, true},
+		{[]string{"case(true:2 mul 3) as newField"}, true},
 		{[]string{"case(false:1,false:2,false:3,false:4,false:5,false:6,false:7,false:8,false:9,false:10) as newField"}, true}, // max of 10 cases
 
 		// negative cases
