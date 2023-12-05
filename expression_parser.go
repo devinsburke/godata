@@ -42,21 +42,23 @@ const (
 	ExpressionTokenFunc                                        // Function, e.g. contains, substring...
 	ExpressionTokenLambdaNav                                   // "/" token when used in lambda expression, e.g. tags/any()
 	ExpressionTokenLambda                                      // [10] any(), all() lambda functions
+	ExpressionTokenCase                                        // A case() statement. See https://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_case
+	ExpressionTokenCasePair                                    // A case statement expression pair [ <boolean expression> : <value expression> ]
 	ExpressionTokenNull                                        //
 	ExpressionTokenIt                                          // The '$it' token
-	ExpressionTokenRoot                                        // The '$root' token
+	ExpressionTokenRoot                                        // [15] The '$root' token
 	ExpressionTokenFloat                                       // A floating point value.
-	ExpressionTokenInteger                                     // [15] An integer value
+	ExpressionTokenInteger                                     // An integer value
 	ExpressionTokenString                                      // SQUOTE *( SQUOTE-in-string / pchar-no-SQUOTE ) SQUOTE
 	ExpressionTokenDate                                        // A date value
-	ExpressionTokenTime                                        // A time value
+	ExpressionTokenTime                                        // [20] A time value
 	ExpressionTokenDateTime                                    // A date-time value
-	ExpressionTokenBoolean                                     // [20]
-	ExpressionTokenLiteral                                     //
+	ExpressionTokenBoolean                                     // A literal boolean value
+	ExpressionTokenLiteral                                     // A literal non-boolean value
 	ExpressionTokenDuration                                    // duration      = [ "duration" ] SQUOTE durationValue SQUOTE
-	ExpressionTokenGuid                                        // A 128-bit GUID
+	ExpressionTokenGuid                                        // [25] A 128-bit GUID
 	ExpressionTokenAssignement                                 // The '=' assignement for function arguments.
-	ExpressionTokenGeographyPolygon                            // [25]
+	ExpressionTokenGeographyPolygon                            //
 	ExpressionTokenGeometryPolygon                             //
 	expressionTokenLast
 )
@@ -74,6 +76,8 @@ func (e ExpressionTokenType) String() string {
 		"ExpressionTokenFunc",
 		"ExpressionTokenLambdaNav",
 		"ExpressionTokenLambda",
+		"ExpressionTokenCase",
+		"ExpressionTokenCasePair",
 		"ExpressionTokenNull",
 		"ExpressionTokenIt",
 		"ExpressionTokenRoot",
@@ -205,6 +209,7 @@ func NewExpressionTokenizer() *Tokenizer {
 	// anyExpr = "any" OPEN BWS [ lambdaVariableExpr BWS COLON BWS lambdaPredicateExpr ] BWS CLOSE
 	// allExpr = "all" OPEN BWS   lambdaVariableExpr BWS COLON BWS lambdaPredicateExpr   BWS CLOSE
 	t.Add("(?i)^(?P<token>(any|all))[\\s(]", ExpressionTokenLambda)
+	t.Add("(?i)^(?P<token>(case))[\\s(]", ExpressionTokenCase)
 	t.Add("^null", ExpressionTokenNull)
 	t.Add("^\\$it", ExpressionTokenIt)
 	t.Add("^\\$root", ExpressionTokenRoot)
@@ -322,6 +327,9 @@ func NewExpressionParser() *ExpressionParser {
 	parser.DefineFunction("any", []int{0, 2}, true)
 	// 'all' requires two arguments of a form similar to 'any'.
 	parser.DefineFunction("all", []int{2}, true)
+	// Define 'case' as a function accepting 1-10 arguments. Each argument is a pair of expressions separated by a colon.
+	// See https://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_case
+	parser.DefineFunction("case", []int{1,2,3,4,5,6,7,8,9,10}, true)
 
 	return parser
 }

@@ -77,6 +77,46 @@ var testCases = []struct {
 		},
 	},
 	{
+		expression: "case(false:0,true:1)",
+		tree: []expectedParseNode{
+			{Value: "case", Depth: 0, Type: ExpressionTokenCase},
+			{Value: "", Depth: 1, Type: ExpressionTokenCasePair},
+			{Value: "false", Depth: 2, Type: ExpressionTokenBoolean},
+			{Value: "0", Depth: 2, Type: ExpressionTokenInteger},
+			{Value: "", Depth: 1, Type: ExpressionTokenCasePair},
+			{Value: "true", Depth: 2, Type: ExpressionTokenBoolean},
+			{Value: "1", Depth: 2, Type: ExpressionTokenInteger},
+		},
+	},
+	{
+		expression: "case(prop eq 'one':1,true:0)",
+		tree: []expectedParseNode{
+			{Value: "case", Depth: 0, Type: ExpressionTokenCase},
+			{Value: "", Depth: 1, Type: ExpressionTokenCasePair},
+			{Value: "eq", Depth: 2, Type: ExpressionTokenLogical},
+			{Value: "prop", Depth: 3, Type: ExpressionTokenLiteral},
+			{Value: "'one'", Depth: 3, Type: ExpressionTokenString},
+			{Value: "1", Depth: 2, Type: ExpressionTokenInteger},
+			{Value: "", Depth: 1, Type: ExpressionTokenCasePair},
+			{Value: "true", Depth: 2, Type: ExpressionTokenBoolean},
+			{Value: "0", Depth: 2, Type: ExpressionTokenInteger},
+		},
+	},
+	{
+		expression: "case(contains(prop,'val'):0,true:1)",
+		tree: []expectedParseNode{
+			{Value: "case", Depth: 0, Type: ExpressionTokenCase},
+			{Value: "", Depth: 1, Type: ExpressionTokenCasePair},
+			{Value: "contains", Depth: 2, Type: ExpressionTokenFunc},
+			{Value: "prop", Depth: 3, Type: ExpressionTokenLiteral},
+			{Value: "'val'", Depth: 3, Type: ExpressionTokenString},
+			{Value: "0", Depth: 2, Type: ExpressionTokenInteger},
+			{Value: "", Depth: 1, Type: ExpressionTokenCasePair},
+			{Value: "true", Depth: 2, Type: ExpressionTokenBoolean},
+			{Value: "1", Depth: 2, Type: ExpressionTokenInteger},
+		},
+	},
+	{
 		/*
 			{
 				"Tags": [

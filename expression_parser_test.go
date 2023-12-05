@@ -246,6 +246,7 @@ func TestInvalidBooleanExpressionSyntax(t *testing.T) {
 		"now()",
 		"tolower(Name)",
 		"concat(First,Last)",
+		"case(false:0,true:1)",
 	}
 	p := NewExpressionParser()
 	p.ExpectBoolExpr = true

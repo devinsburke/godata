@@ -33,6 +33,15 @@ func TestParseCompute(t *testing.T) {
 		{[]string{"twoArgFunc(one, two) as newField"}, true},
 		{[]string{"twoArgFunc(one, two) as newField", "tolower(three) as  newFieldTwo"}, true},
 
+		{[]string{"case(false:0) as newField"}, true},
+		{[]string{"case(false:0,true:1) as newField"}, true},
+		{[]string{"case(prop eq 'one':1,prop eq 'two':2) as newField"}, true},
+		{[]string{"case(tolower(one) eq one:'lower') as newField"}, true},
+		{[]string{"case(contains(haystack,'needle'):1,true:1) as newField"}, true},
+		{[]string{"case(tolower(one) eq one:tolower(one)) as newField"}, true},
+		{[]string{"case(true:2 mul 3) as newField"}, true},
+		{[]string{"case(false:1,false:2,false:3,false:4,false:5,false:6,false:7,false:8,false:9,false:10) as newField"}, true}, // max of 10 cases
+
 		// negative cases
 		{[]string{"one add two as newField2"}, false},
 		{[]string{"one add two newField2"}, false},
@@ -40,6 +49,15 @@ func TestParseCompute(t *testing.T) {
 		{[]string{"as"}, false},
 		{[]string{"as newField"}, false},
 		{[]string{"zeroArgFunc() as "}, false},
+
+		{[]string{"case as newField"}, false},
+		{[]string{"case() as newField"}, false},
+		{[]string{"case(false:,true:1) as newField"}, false},
+		{[]string{"case(false,true:1) as newField"}, false},
+		{[]string{"case(false,true:1) as newField"}, false},
+		{[]string{"case(1:1,true:1) as newField"}, false},
+		{[]string{"case(1:1,true:1) as newField"}, false},
+		{[]string{"case(false:1,false:2,false:3,false:4,false:5,false:6,false:7,false:8,false:9,false:10,false:11) as newField"}, false}, // max of 10 cases
 	}
 
 	for i, v := range testCases {
