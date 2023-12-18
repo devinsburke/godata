@@ -119,7 +119,7 @@ func TestUrlParserStrictValidation(t *testing.T) {
 		return
 	}
 
-	testUrl = "Employees(1)/Sales.Manager?$filter=Name in ('Bob','Alice')&$select=Name,Address%3B$expand=Address($select=City)"
+	testUrl = "Employees(1)/Sales.Manager?$filter=Name in ('Bob','Alice')&$select=Name,Address&$expand=Address($select=City)"
 	parsedUrl, err = url.Parse(testUrl)
 	if err != nil {
 		t.Error(err)
@@ -527,6 +527,18 @@ func TestUnescapeStringTokens(t *testing.T) {
 		{
 			url:                "/Product?$select=,Name",
 			errRegex:           regexp.MustCompile(`Extra comma in \$select\.`),
+			expectedFilterTree: nil,
+			expectedOrderBy:    nil,
+		},
+		{
+			url:                "/Product?$select=$select=Name",
+			errRegex:           regexp.MustCompile(`Invalid \$select\ value.`),
+			expectedFilterTree: nil,
+			expectedOrderBy:    nil,
+		},
+		{
+			url:                "/Product?$select=$Name",
+			errRegex:           regexp.MustCompile(`Invalid \$select\ value.`),
 			expectedFilterTree: nil,
 			expectedOrderBy:    nil,
 		},
