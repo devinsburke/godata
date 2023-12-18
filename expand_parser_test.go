@@ -123,16 +123,27 @@ func TestExpandNestedParens(t *testing.T) {
 }
 
 func TestExpandNegativeCases(t *testing.T) {
-	input := "Products," // Extraneous comma
-	ctx := context.Background()
-	output, err := ParseExpandString(ctx, input)
-
-	if err == nil {
-		t.Error("Expected parsing to return error.")
-		return
+	testcases := []string{
+		"Products,",        // Extraneous comma
+		"Products//Data",   // Double slash
+		"/Products",        // Extraneous leading slash
+		"Products/",        // Extraneous trailing slash
+		"Orders,/Products", // Extraneous leading slash
+		"Products/,Orders", // Extraneous trailing slash
 	}
-	if output != nil {
-		t.Error("Expected parsing to return nil output.")
-		return
+
+	for _, testcase := range testcases {
+		t.Logf("Expand: %s", testcase)
+		ctx := context.Background()
+		output, err := ParseExpandString(ctx, testcase)
+
+		if err == nil {
+			t.Error("Expected parsing to return error.")
+			return
+		}
+		if output != nil {
+			t.Error("Expected parsing to return nil output.")
+			return
+		}
 	}
 }
