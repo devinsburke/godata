@@ -1,3 +1,3 @@
-module github.com/CiscoM31/godata
+module github.com/devinsburke/godata
 
 go 1.19
